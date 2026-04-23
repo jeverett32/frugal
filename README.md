@@ -1,10 +1,11 @@
 <!--
 Logo
 ----
-Drop your logo at `docs/assets/logo.svg` (or `docs/assets/logo.png`) and update the `src=` below if needed.
+Drop your logo at `docs/assets/logo.png` and update the `src=` below if needed.
+Portrait logos: prefer setting `height=` (not `width=`) to preserve aspect ratio.
 -->
 <p align="center">
-  <img src="docs/assets/logo.svg" alt="frugal logo" width="120" />
+  <img src="docs/assets/logo.png" alt="frugal logo" height="180" />
 </p>
 
 <h1 align="center">frugal</h1>
