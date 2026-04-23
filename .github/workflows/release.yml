@@ -87,10 +87,10 @@ jobs:
         with:
           name: release-${{ matrix.target }}
           path: |
-            frugal-${{ github.ref_name }}-${{ matrix.target }}.tar.gz
-            frugal-${{ github.ref_name }}-${{ matrix.target }}.tar.gz.sha256
-            frugal-${{ github.ref_name }}-${{ matrix.target }}.zip
-            frugal-${{ github.ref_name }}-${{ matrix.target }}.zip.sha256
+            frugal-${{ env.RELEASE_REF }}-${{ matrix.target }}.tar.gz
+            frugal-${{ env.RELEASE_REF }}-${{ matrix.target }}.tar.gz.sha256
+            frugal-${{ env.RELEASE_REF }}-${{ matrix.target }}.zip
+            frugal-${{ env.RELEASE_REF }}-${{ matrix.target }}.zip.sha256
 
   publish:
     name: publish-release
@@ -114,6 +114,7 @@ jobs:
 
       - name: Add installer script
         run: |
+          mkdir -p dist
           cp scripts/install.sh dist/install.sh
           cp scripts/install.ps1 dist/install.ps1
 
