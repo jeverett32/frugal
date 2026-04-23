@@ -46,8 +46,30 @@ pub struct StatusArgs {
     pub paths: Vec<PathBuf>,
 }
 
-#[derive(Debug, Clone, Args, PartialEq, Eq, Default)]
-pub struct GainArgs {}
+#[derive(Debug, Clone, Args, PartialEq, Eq)]
+pub struct GainArgs {
+    /// Emit machine-readable JSON
+    #[arg(long)]
+    pub json: bool,
+
+    /// Show recent pack runs
+    #[arg(long)]
+    pub history: bool,
+
+    /// Maximum recent runs to show
+    #[arg(long, value_name = "N", default_value_t = 10)]
+    pub limit: usize,
+}
+
+impl Default for GainArgs {
+    fn default() -> Self {
+        Self {
+            json: false,
+            history: false,
+            limit: 10,
+        }
+    }
+}
 
 impl Cli {
     pub fn parse() -> Self {
@@ -118,5 +140,20 @@ mod tests {
         let cli = Cli::try_parse_from(["fgl", "gain"]).expect("gain parses");
 
         assert_eq!(cli.command, Command::Gain(GainArgs::default()));
+    }
+
+    #[test]
+    fn parse_gain_flags() {
+        let cli = Cli::try_parse_from(["fgl", "gain", "--json", "--history", "--limit", "5"])
+            .expect("gain flags parse");
+
+        assert_eq!(
+            cli.command,
+            Command::Gain(GainArgs {
+                json: true,
+                history: true,
+                limit: 5,
+            })
+        );
     }
 }
