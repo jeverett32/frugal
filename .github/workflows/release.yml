@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to build (tag/sha/branch). Example: v0.2.0"
+        required: true
 
 permissions:
   contents: write
@@ -12,6 +17,8 @@ jobs:
   build:
     name: build-${{ matrix.target }}
     runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_REF: ${{ inputs.ref || github.ref_name }}
     strategy:
       fail-fast: false
       matrix:
@@ -20,7 +27,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             archive: tar.gz
             binary: fgl
-          - os: macos-13
+          - os: macos-14
             target: x86_64-apple-darwin
             archive: tar.gz
             binary: fgl
@@ -36,6 +43,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_REF }}
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -53,7 +62,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME}"
+          version="${RELEASE_REF}"
           dir="frugal-${version}-${{ matrix.target }}"
           mkdir -p "$dir"
           cp "target/${{ matrix.target }}/release/${{ matrix.binary }}" "$dir/"
@@ -65,7 +74,7 @@ jobs:
         if: matrix.archive == 'zip'
         shell: pwsh
         run: |
-          $version = "${env:GITHUB_REF_NAME}"
+          $version = "${env:RELEASE_REF}"
           $dir = "frugal-$version-${{ matrix.target }}"
           New-Item -ItemType Directory -Path $dir | Out-Null
           Copy-Item "target/${{ matrix.target }}/release/${{ matrix.binary }}" "$dir/"
@@ -87,10 +96,14 @@ jobs:
     name: publish-release
     needs: build
     runs-on: ubuntu-latest
+    env:
+      RELEASE_REF: ${{ inputs.ref || github.ref_name }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_REF }}
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -107,5 +120,6 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_REF }}
           files: dist/*
           generate_release_notes: true
