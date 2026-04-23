@@ -12,17 +12,53 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const STATE_DIR: &str = ".fgl";
 const HISTORY_PATH: &str = ".fgl/history.jsonl";
+const GLOBAL_STATE_SUBDIR: &str = ".local/share/fgl";
+const GLOBAL_REPOS_FILE: &str = "repos.txt";
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct GainRunner;
 
 impl GainCommand for GainRunner {
     fn run(&self, args: &GainArgs) -> Result<()> {
+        let mut stdout = io::stdout().lock();
+
+        if args.global {
+            let repos = load_global_repos();
+            let mut repo_reports: Vec<(String, GainReport)> = Vec::new();
+            for repo_path in &repos {
+                let events = load_history(repo_path)?;
+                let report = GainReport::from_events(&events, args.limit);
+                repo_reports.push((repo_path.display().to_string(), report));
+            }
+
+            if args.json {
+                let grand_events: Vec<GainEvent> = repos
+                    .iter()
+                    .flat_map(|p| load_history(p).unwrap_or_default())
+                    .collect();
+                let global = GlobalGainReport {
+                    repos: repo_reports
+                        .iter()
+                        .map(|(name, report)| RepoGainReport {
+                            repo: name.clone(),
+                            report: report.clone(),
+                        })
+                        .collect(),
+                    grand_summary: GainSummary::from_events(&grand_events),
+                };
+                let json = serde_json::to_string_pretty(&global).map_err(|e| {
+                    Error::history(format!("failed to serialize global gain report: {e}"))
+                })?;
+                return writeln!(stdout, "{json}").map_err(Error::io);
+            }
+
+            return write!(stdout, "{}", render_global_report(&repo_reports)).map_err(Error::io);
+        }
+
         let cwd = std::env::current_dir().map_err(Error::io)?;
         let events = load_history(&cwd)?;
         let report = GainReport::from_events(&events, args.limit);
 
-        let mut stdout = io::stdout().lock();
         if args.json {
             let json = serde_json::to_string_pretty(&report).map_err(|error| {
                 Error::history(format!("failed to serialize gain report: {error}"))
@@ -81,6 +117,18 @@ pub struct GainReport {
     pub recent_runs: Vec<RecentRun>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RepoGainReport {
+    pub repo: String,
+    pub report: GainReport,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GlobalGainReport {
+    pub repos: Vec<RepoGainReport>,
+    pub grand_summary: GainSummary,
+}
+
 impl GainSummary {
     pub fn from_events(events: &[GainEvent]) -> Self {
         let raw_tokens = events.iter().map(|event| event.raw_tokens).sum::<usize>();
@@ -98,6 +146,14 @@ impl GainSummary {
 
     pub fn savings_percent(&self) -> String {
         format_percent(self.saved_tokens, self.raw_tokens)
+    }
+
+    pub fn savings_percent_f64(&self) -> f64 {
+        if self.raw_tokens == 0 {
+            0.0
+        } else {
+            (self.saved_tokens as f64 / self.raw_tokens as f64) * 100.0
+        }
     }
 }
 
@@ -178,7 +234,10 @@ pub fn append_pack_history(repo_root: &Path, selection: &Selection, rendered: &s
         .append(true)
         .open(repo_root.join(HISTORY_PATH))
         .map_err(Error::io)?;
-    writeln!(file, "{line}").map_err(Error::io)
+    writeln!(file, "{line}").map_err(Error::io)?;
+
+    register_repo_globally(repo_root);
+    Ok(())
 }
 
 pub fn load_history(repo_root: &Path) -> Result<Vec<GainEvent>> {
@@ -206,6 +265,57 @@ pub fn load_history(repo_root: &Path) -> Result<Vec<GainEvent>> {
     }
 
     Ok(events)
+}
+
+fn global_state_dir() -> Option<std::path::PathBuf> {
+    std::env::var("HOME")
+        .ok()
+        .map(|home| std::path::PathBuf::from(home).join(GLOBAL_STATE_SUBDIR))
+}
+
+fn register_repo_globally(repo_root: &Path) {
+    let canonical = match fs::canonicalize(repo_root) {
+        Ok(p) => p,
+        Err(_) => return,
+    };
+    let state_dir = match global_state_dir() {
+        Some(d) => d,
+        None => return,
+    };
+    if fs::create_dir_all(&state_dir).is_err() {
+        return;
+    }
+    let repos_file = state_dir.join(GLOBAL_REPOS_FILE);
+    let canonical_str = canonical.to_string_lossy().into_owned();
+
+    let existing = fs::read_to_string(&repos_file).unwrap_or_default();
+    if existing.lines().any(|line| line.trim() == canonical_str) {
+        return;
+    }
+
+    let mut file = match OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&repos_file)
+    {
+        Ok(f) => f,
+        Err(_) => return,
+    };
+    let _ = writeln!(file, "{canonical_str}");
+}
+
+pub fn load_global_repos() -> Vec<std::path::PathBuf> {
+    let repos_file = match global_state_dir() {
+        Some(d) => d.join(GLOBAL_REPOS_FILE),
+        None => return Vec::new(),
+    };
+    let contents = fs::read_to_string(&repos_file).unwrap_or_default();
+    contents
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| std::path::PathBuf::from(line.trim()))
+        .filter(|p| p.is_dir())
+        .collect()
 }
 
 fn build_gain_event(selection: &Selection, rendered: &str) -> Result<GainEvent> {
@@ -270,7 +380,15 @@ fn format_percent(saved_tokens: i64, raw_tokens: usize) -> String {
     }
 }
 
-fn render_summary_report(report: &GainReport) -> String {
+pub fn savings_bar(percent: f64, width: usize) -> String {
+    let clamped = percent.clamp(0.0, 100.0);
+    let filled = ((clamped / 100.0) * width as f64).round() as usize;
+    let filled = filled.min(width);
+    let empty = width - filled;
+    format!("{}{}", "█".repeat(filled), "░".repeat(empty))
+}
+
+pub(crate) fn render_summary_report(report: &GainReport) -> String {
     let mut output = String::new();
     output.push_str("FGL Estimated Savings (Repo Scope)\n");
     output.push_str("=================================\n\n");
@@ -287,8 +405,10 @@ fn render_summary_report(report: &GainReport) -> String {
         "Tokens saved:     {}\n",
         report.summary.saved_tokens
     ));
+    let pct = report.summary.savings_percent_f64();
     output.push_str(&format!(
-        "Savings rate:     {}%\n",
+        "Savings rate:     {}  {}%\n",
+        savings_bar(pct, 10),
         report.summary.savings_percent()
     ));
     output.push_str(&format!(
@@ -347,9 +467,85 @@ fn render_history_report(report: &GainReport) -> String {
     output
 }
 
+fn render_global_report(repo_reports: &[(String, GainReport)]) -> String {
+    let mut output = String::new();
+    output.push_str("FGL Estimated Savings (Global Scope)\n");
+    output.push_str("====================================\n\n");
+
+    if repo_reports.is_empty() {
+        output.push_str("No repos registered. Run `fgl pack` in a repo to register it.\n");
+        return output;
+    }
+
+    let max_repo_len = repo_reports
+        .iter()
+        .map(|(name, _)| name.len())
+        .max()
+        .unwrap_or(4)
+        .max(4);
+
+    output.push_str(&format!(
+        "{:<width$}  {:>5}  {:>12}  {}\n",
+        "Repo",
+        "Packs",
+        "Saved",
+        "Rate",
+        width = max_repo_len
+    ));
+    output.push_str(&format!(
+        "{}  {}  {}  {}\n",
+        "-".repeat(max_repo_len),
+        "-----",
+        "------------",
+        "----------"
+    ));
+
+    let mut grand_raw: usize = 0;
+    let mut grand_pack: usize = 0;
+    let mut grand_packs: usize = 0;
+
+    for (repo, report) in repo_reports {
+        let s = &report.summary;
+        grand_raw = grand_raw.saturating_add(s.raw_tokens);
+        grand_pack = grand_pack.saturating_add(s.pack_tokens);
+        grand_packs = grand_packs.saturating_add(s.packs);
+        let pct = s.savings_percent_f64();
+        output.push_str(&format!(
+            "{:<width$}  {:>5}  {:>12}  {}  {}%\n",
+            repo,
+            s.packs,
+            s.saved_tokens,
+            savings_bar(pct, 10),
+            s.savings_percent(),
+            width = max_repo_len
+        ));
+    }
+
+    let grand_saved = grand_raw as i64 - grand_pack as i64;
+    let grand_pct = if grand_raw == 0 {
+        0.0
+    } else {
+        (grand_saved as f64 / grand_raw as f64) * 100.0
+    };
+    let grand_pct_str = format!("{grand_pct:.2}");
+
+    output.push_str(&format!(
+        "\n{:<width$}  {:>5}  {:>12}  {}  {}%\n",
+        "TOTAL",
+        grand_packs,
+        grand_saved,
+        savings_bar(grand_pct, 10),
+        grand_pct_str,
+        width = max_repo_len,
+    ));
+    output.push_str(&format!("({} repos)\n", repo_reports.len()));
+
+    output
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{format_percent, GainEvent, GainReport, GainSummary};
+    use super::{format_percent, savings_bar, GainEvent, GainReport, GainSummary};
 
     fn sample_events() -> Vec<GainEvent> {
         vec![
@@ -410,5 +606,39 @@ mod tests {
     #[test]
     fn format_percent_handles_zero_raw() {
         assert_eq!(format_percent(0, 0), "0.00");
+    }
+
+    #[test]
+    fn savings_bar_full() {
+        assert_eq!(savings_bar(100.0, 10), "██████████");
+    }
+
+    #[test]
+    fn savings_bar_empty() {
+        assert_eq!(savings_bar(0.0, 10), "░░░░░░░░░░");
+    }
+
+    #[test]
+    fn savings_bar_half() {
+        assert_eq!(savings_bar(50.0, 10), "█████░░░░░");
+    }
+
+    #[test]
+    fn savings_bar_clamps_over_100() {
+        assert_eq!(savings_bar(150.0, 10), "██████████");
+    }
+
+    #[test]
+    fn savings_bar_clamps_negative() {
+        assert_eq!(savings_bar(-10.0, 10), "░░░░░░░░░░");
+    }
+
+    #[test]
+    fn summary_report_includes_bar() {
+        use super::render_summary_report;
+        let report = GainReport::from_events(&sample_events(), 10);
+        let output = render_summary_report(&report);
+        assert!(output.contains('█'), "bar missing from summary: {output:?}");
+        assert!(output.contains('░'), "bar empty chars missing: {output:?}");
     }
 }

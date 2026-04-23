@@ -280,6 +280,85 @@ prefix=123 active=18 ratio=6.83 files=27 langs=4
 
 Token estimate uses `ceil(bytes / 4)`.
 
+### `fgl gain`
+
+Reports estimated token savings from pack history.
+
+History is written to `.fgl/history.jsonl` after each successful `fgl pack`. Metrics are derived from actual pack runs — not billing APIs or proxy telemetry.
+
+Default view (repo scope):
+
+```bash
+fgl gain
+```
+
+```text
+FGL Estimated Savings (Repo Scope)
+=================================
+
+Total packs:      12
+Raw tokens:       87432
+Pack tokens:      38201
+Tokens saved:     49231
+Savings rate:     █████████░  56.33%
+Prefix tokens:    32100
+Active tokens:    6101
+
+Top Active Files
+----------------
+1. src/gain.rs (8)
+2. src/cli.rs (5)
+3. README.md (3)
+```
+
+Show recent runs:
+
+```bash
+fgl gain --history --limit 5
+```
+
+Machine-readable JSON:
+
+```bash
+fgl gain --json
+```
+
+Global aggregate across all registered repos:
+
+```bash
+fgl gain --global
+```
+
+```text
+FGL Estimated Savings (Global Scope)
+====================================
+
+Repo                             Packs         Saved  Rate
+-------------------------------  -----  ------------  ----------
+/home/user/projects/frugal          12        49231   █████████░  56.33%
+/home/user/projects/other            3         8100   ████░░░░░░  42.10%
+
+TOTAL                               15        57331   ████████░░  53.87%
+(2 repos)
+```
+
+Repos are registered automatically the first time `fgl pack` runs in each repo. No daemon, no network, no background process.
+
+Global JSON output:
+
+```bash
+fgl gain --global --json
+```
+
+Flags:
+
+| Flag | Description |
+|---|---|
+| `--history` | Show recent pack runs below the summary |
+| `--limit N` | Cap recent runs and top files (default 10) |
+| `--json` | Emit machine-readable JSON |
+| `--global` | Aggregate across all registered repos |
+
 ## Quick Start
 
 Initialize repo once:

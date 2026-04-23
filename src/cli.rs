@@ -59,6 +59,10 @@ pub struct GainArgs {
     /// Maximum recent runs to show
     #[arg(long, value_name = "N", default_value_t = 10)]
     pub limit: usize,
+
+    /// Aggregate savings across all registered repos
+    #[arg(long)]
+    pub global: bool,
 }
 
 impl Default for GainArgs {
@@ -67,6 +71,7 @@ impl Default for GainArgs {
             json: false,
             history: false,
             limit: 10,
+            global: false,
         }
     }
 }
@@ -153,6 +158,7 @@ mod tests {
                 json: true,
                 history: true,
                 limit: 5,
+                global: false,
             })
         );
     }
