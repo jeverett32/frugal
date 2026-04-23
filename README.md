@@ -94,6 +94,43 @@ Windows manual fallback:
 - place it in a directory on your `PATH`
 - verify with `fgl --version`
 
+## Uninstall
+
+Linux / macOS:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jeverett32/frugal/main/scripts/uninstall.sh | bash
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/jeverett32/frugal/main/scripts/uninstall.ps1 | iex
+```
+
+Cargo install:
+
+```bash
+cargo uninstall frugal
+```
+
+Manual removal — delete the binary directly:
+
+```bash
+rm ~/.local/bin/fgl          # Linux / macOS default
+```
+
+```powershell
+Remove-Item "$HOME\.local\bin\fgl.exe"   # Windows default
+```
+
+The scripts only remove the `fgl` binary. Per-repo `.fgl/` directories and `~/.local/share/fgl/` (global gain registry) are left intact. Remove them manually if wanted:
+
+```bash
+rm -rf .fgl/                          # remove repo state
+rm -rf ~/.local/share/fgl/            # remove global gain registry
+```
+
 ## Problem
 
 AI coding workflows waste money and latency on repeated context.
