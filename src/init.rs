@@ -55,7 +55,7 @@ fn ensure_config(repo_root: &Path, rescan: bool) -> Result<()> {
 
 fn scan_languages(repo_root: &Path) -> Vec<String> {
     let mut found: HashSet<&'static str> = HashSet::new();
-    walk_for_languages(repo_root, repo_root, &mut found);
+    walk_for_languages(repo_root, &mut found);
     DEFAULT_LANGUAGES
         .iter()
         .filter(|lang| found.contains(**lang))
@@ -63,7 +63,7 @@ fn scan_languages(repo_root: &Path) -> Vec<String> {
         .collect()
 }
 
-fn walk_for_languages(repo_root: &Path, dir: &Path, found: &mut HashSet<&'static str>) {
+fn walk_for_languages(dir: &Path, found: &mut HashSet<&'static str>) {
     let entries = match fs::read_dir(dir) {
         Ok(e) => e,
         Err(_) => return,
@@ -74,12 +74,11 @@ fn walk_for_languages(repo_root: &Path, dir: &Path, found: &mut HashSet<&'static
             Some(n) => n,
             None => continue,
         };
-        // skip .git, .fgl, and other hidden dirs
         if name.starts_with('.') {
             continue;
         }
         if path.is_dir() {
-            walk_for_languages(repo_root, &path, found);
+            walk_for_languages(&path, found);
         } else if let Some(label) = language_for_path(&path).label() {
             found.insert(label);
         }
