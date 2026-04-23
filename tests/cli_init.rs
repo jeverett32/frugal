@@ -1,8 +1,8 @@
 mod common;
 
-use common::{assert_success, read, remove_repo, run_init, temp_repo, write};
+use common::{assert_success, read, remove_repo, run_init, run_init_rescan, temp_repo, write};
 
-const EXPECTED_CONFIG: &str = "version = 1\n\n[foundation]\npinned = [\"AGENTS.md\", \"CLAUDE.md\"]\n\n[languages]\nenabled = [\"python\", \"rust\", \"javascript\", \"typescript\", \"go\", \"html\", \"css\", \"yaml\", \"shell\", \"json\", \"markdown\", \"toml\"]\n";
+const EXPECTED_CONFIG_EMPTY: &str = "version = 1\n\n[foundation]\npinned = [\"AGENTS.md\", \"CLAUDE.md\"]\n\n[languages]\nenabled = []\n";
 
 const EXPECTED_AGENTS: &str = "<!-- frugal:managed:start -->\n# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n<!-- frugal:managed:end -->\n";
 
@@ -15,7 +15,7 @@ fn init_creates_config_agents_claude_in_empty_repo() {
     let output = run_init(&repo);
 
     assert_success(&output);
-    assert_eq!(read(&repo, ".fgl/config.toml"), EXPECTED_CONFIG);
+    assert_eq!(read(&repo, ".fgl/config.toml"), EXPECTED_CONFIG_EMPTY);
     assert_eq!(read(&repo, "AGENTS.md"), EXPECTED_AGENTS);
     assert_eq!(read(&repo, "CLAUDE.md"), EXPECTED_CLAUDE);
 
@@ -110,6 +110,58 @@ fn init_preserves_existing_valid_toml_config() {
     let repo = temp_repo();
     let existing = "# repo-specific config\nversion = 1\n\n[foundation]\npinned = [\n  'custom.md',\n  \"notes.md\",\n]\n\n[languages]\nenabled = [\"python\", \"rust\"]\n";
     write(&repo, ".fgl/config.toml", existing);
+
+    assert_success(&run_init(&repo));
+
+    assert_eq!(read(&repo, ".fgl/config.toml"), existing);
+
+    remove_repo(&repo);
+}
+
+#[test]
+fn init_detects_languages_from_existing_files() {
+    let repo = temp_repo();
+    write(&repo, "src/main.rs", "fn main() {}");
+    write(&repo, "README.md", "# hello");
+    write(&repo, "config.toml", "key = \"value\"");
+
+    assert_success(&run_init(&repo));
+
+    assert_eq!(
+        read(&repo, ".fgl/config.toml"),
+        "version = 1\n\n[foundation]\npinned = [\"AGENTS.md\", \"CLAUDE.md\"]\n\n[languages]\nenabled = [\"rust\", \"markdown\", \"toml\"]\n"
+    );
+
+    remove_repo(&repo);
+}
+
+#[test]
+fn init_rescan_updates_languages_in_existing_config() {
+    let repo = temp_repo();
+    write(
+        &repo,
+        ".fgl/config.toml",
+        "version = 1\n\n[foundation]\npinned = [\"custom.md\"]\n\n[languages]\nenabled = [\"python\"]\n",
+    );
+    write(&repo, "src/main.rs", "fn main() {}");
+    write(&repo, "app.py", "pass");
+
+    assert_success(&run_init_rescan(&repo));
+
+    assert_eq!(
+        read(&repo, ".fgl/config.toml"),
+        "version = 1\n\n[foundation]\npinned = [\"custom.md\"]\n\n[languages]\nenabled = [\"python\", \"rust\"]\n"
+    );
+
+    remove_repo(&repo);
+}
+
+#[test]
+fn init_without_rescan_does_not_update_existing_config_languages() {
+    let repo = temp_repo();
+    let existing = "version = 1\n\n[foundation]\npinned = [\"custom.md\"]\n\n[languages]\nenabled = [\"python\"]\n";
+    write(&repo, ".fgl/config.toml", existing);
+    write(&repo, "src/main.rs", "fn main() {}");
 
     assert_success(&run_init(&repo));
 

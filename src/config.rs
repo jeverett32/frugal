@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fmt;
 
 pub const CONFIG_VERSION: u32 = 1;
-const DEFAULT_LANGUAGES: &[&str] = &[
+pub const DEFAULT_LANGUAGES: &[&str] = &[
     "python",
     "rust",
     "javascript",

@@ -26,7 +26,11 @@ pub enum Command {
 }
 
 #[derive(Debug, Clone, Args, PartialEq, Eq, Default)]
-pub struct InitArgs {}
+pub struct InitArgs {
+    /// Rescan repo for languages and update config
+    #[arg(long)]
+    pub rescan: bool,
+}
 
 #[derive(Debug, Clone, Args, PartialEq, Eq, Default)]
 pub struct PackArgs {

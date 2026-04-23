@@ -27,6 +27,14 @@ pub fn run_init(repo_root: &Path) -> Output {
         .expect("run fgl init")
 }
 
+pub fn run_init_rescan(repo_root: &Path) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_fgl"))
+        .current_dir(repo_root)
+        .args(["init", "--rescan"])
+        .output()
+        .expect("run fgl init --rescan")
+}
+
 pub fn read(repo_root: &Path, relative: &str) -> String {
     fs::read_to_string(repo_root.join(relative)).expect("read file")
 }

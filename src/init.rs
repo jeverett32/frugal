@@ -1,8 +1,10 @@
 use crate::app::InitCommand;
 use crate::cli::InitArgs;
-use crate::config::Config;
+use crate::config::{Config, DEFAULT_LANGUAGES};
 use crate::error::{Error, Result};
+use crate::languages::language_for_path;
 use crate::markers::upsert_managed_block;
+use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
@@ -19,29 +21,69 @@ pub struct InitRunner;
 
 impl InitCommand for InitRunner {
     fn run(&self, args: &InitArgs) -> Result<()> {
-        let _ = args;
-        init_repo(Path::new("."))
+        init_repo(Path::new("."), args.rescan)
     }
 }
 
-fn init_repo(repo_root: &Path) -> Result<()> {
+fn init_repo(repo_root: &Path, rescan: bool) -> Result<()> {
     fs::create_dir_all(repo_root.join(CONFIG_DIR)).map_err(Error::io)?;
-    ensure_config(repo_root)?;
+    ensure_config(repo_root, rescan)?;
     ensure_managed_doc(repo_root, AGENTS_PATH, AGENTS_BODY)?;
     ensure_managed_doc(repo_root, CLAUDE_PATH, CLAUDE_BODY)?;
     Ok(())
 }
 
-fn ensure_config(repo_root: &Path) -> Result<()> {
-    if load_config(repo_root)?.is_some() {
+fn ensure_config(repo_root: &Path, rescan: bool) -> Result<()> {
+    let existing = load_config(repo_root)?;
+
+    if let Some(mut config) = existing {
+        if rescan {
+            config.languages.enabled = scan_languages(repo_root);
+            let rendered = config.render().map_err(Error::config)?;
+            fs::write(repo_root.join(CONFIG_PATH), rendered).map_err(Error::io)?;
+        }
         return Ok(());
     }
 
     let mut config = Config::default();
     config.foundation.pinned = vec![AGENTS_PATH.to_string(), CLAUDE_PATH.to_string()];
+    config.languages.enabled = scan_languages(repo_root);
 
     let rendered = config.render().map_err(Error::config)?;
     fs::write(repo_root.join(CONFIG_PATH), rendered).map_err(Error::io)
+}
+
+fn scan_languages(repo_root: &Path) -> Vec<String> {
+    let mut found: HashSet<&'static str> = HashSet::new();
+    walk_for_languages(repo_root, repo_root, &mut found);
+    DEFAULT_LANGUAGES
+        .iter()
+        .filter(|lang| found.contains(**lang))
+        .map(|lang| lang.to_string())
+        .collect()
+}
+
+fn walk_for_languages(repo_root: &Path, dir: &Path, found: &mut HashSet<&'static str>) {
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n,
+            None => continue,
+        };
+        // skip .git, .fgl, and other hidden dirs
+        if name.starts_with('.') {
+            continue;
+        }
+        if path.is_dir() {
+            walk_for_languages(repo_root, &path, found);
+        } else if let Some(label) = language_for_path(&path).label() {
+            found.insert(label);
+        }
+    }
 }
 
 pub fn load_config(repo_root: &Path) -> Result<Option<Config>> {
