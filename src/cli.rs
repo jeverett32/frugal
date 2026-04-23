@@ -21,6 +21,8 @@ pub enum Command {
     Pack(PackArgs),
     /// Print one-line prompt-pack metrics
     Status(StatusArgs),
+    /// Summarize estimated token savings from pack history
+    Gain(GainArgs),
 }
 
 #[derive(Debug, Clone, Args, PartialEq, Eq, Default)]
@@ -43,6 +45,9 @@ pub struct StatusArgs {
     #[arg(value_name = "PATH")]
     pub paths: Vec<PathBuf>,
 }
+
+#[derive(Debug, Clone, Args, PartialEq, Eq, Default)]
+pub struct GainArgs {}
 
 impl Cli {
     pub fn parse() -> Self {
@@ -106,5 +111,12 @@ mod tests {
         let error = Cli::try_parse_from(["fgl", "init", "--help"]).expect_err("help exits");
 
         assert_eq!(error.kind(), ErrorKind::DisplayHelp);
+    }
+
+    #[test]
+    fn parse_gain_subcommand() {
+        let cli = Cli::try_parse_from(["fgl", "gain"]).expect("gain parses");
+
+        assert_eq!(cli.command, Command::Gain(GainArgs::default()));
     }
 }

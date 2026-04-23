@@ -22,6 +22,7 @@ pub enum Error {
         path: PathBuf,
         origin: PathOrigin,
     },
+    History(String),
     Config(ConfigError),
     Marker(MarkerError),
 }
@@ -53,6 +54,10 @@ impl Error {
         Self::Config(error)
     }
 
+    pub fn history(detail: String) -> Self {
+        Self::History(detail)
+    }
+
     pub fn marker(error: MarkerError) -> Self {
         Self::Marker(error)
     }
@@ -63,6 +68,7 @@ impl Error {
             Self::Io(_)
             | Self::PathNotFound { .. }
             | Self::PathOutsideRepo { .. }
+            | Self::History(_)
             | Self::Config(_)
             | Self::Marker(_) => 1,
         }
@@ -87,6 +93,7 @@ impl Display for Error {
                     path.display()
                 )
             }
+            Self::History(detail) => write!(f, "history error: {detail}"),
             Self::Config(error) => write!(f, "config error: {error}"),
             Self::Marker(error) => write!(f, "marker error: {error}"),
         }

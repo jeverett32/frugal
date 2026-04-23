@@ -20,11 +20,13 @@ impl PackCommand for PackRunner {
         let rendered = render_markdown(&pack);
 
         if let Some(output_path) = &args.output {
-            fs::write(output_path, rendered).map_err(Error::io)
+            fs::write(output_path, &rendered).map_err(Error::io)?;
         } else {
             let mut stdout = io::stdout().lock();
-            stdout.write_all(rendered.as_bytes()).map_err(Error::io)
+            stdout.write_all(rendered.as_bytes()).map_err(Error::io)?;
         }
+
+        crate::gain::append_pack_history(&cwd, &selection, &rendered)
     }
 }
 

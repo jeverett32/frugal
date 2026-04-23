@@ -3,6 +3,7 @@ pub mod cli;
 pub mod config;
 pub mod discovery;
 pub mod error;
+pub mod gain;
 pub mod init;
 pub mod languages;
 pub mod markers;
@@ -10,13 +11,14 @@ pub mod pack;
 pub mod status;
 pub mod token;
 
-pub use app::{App, InitCommand, PackCommand, StatusCommand, StubRunner};
+pub use app::{App, GainCommand, InitCommand, PackCommand, StatusCommand, StubRunner};
 pub use cli::{Cli, Command};
 pub use error::{Error, Result};
+pub use gain::GainRunner;
 pub use init::InitRunner;
 pub use pack::PackRunner;
 pub use status::StatusRunner;
 
 pub fn run() -> Result<()> {
-    App::new(InitRunner, PackRunner, StatusRunner).run(Cli::parse())
+    App::new(InitRunner, PackRunner, StatusRunner, GainRunner).run(Cli::parse())
 }
