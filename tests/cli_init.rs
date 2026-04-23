@@ -2,7 +2,7 @@ mod common;
 
 use common::{assert_success, read, remove_repo, run_init, temp_repo, write};
 
-const EXPECTED_CONFIG: &str = "version = 1\n\n[foundation]\npinned = [\"AGENTS.md\", \"CLAUDE.md\"]\n\n[languages]\nenabled = [\"python\", \"rust\", \"javascript\", \"typescript\", \"go\"]\n";
+const EXPECTED_CONFIG: &str = "version = 1\n\n[foundation]\npinned = [\"AGENTS.md\", \"CLAUDE.md\"]\n\n[languages]\nenabled = [\"python\", \"rust\", \"javascript\", \"typescript\", \"go\", \"html\", \"css\", \"yaml\", \"shell\", \"json\", \"markdown\", \"toml\"]\n";
 
 const EXPECTED_AGENTS: &str = "<!-- frugal:managed:start -->\n# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n<!-- frugal:managed:end -->\n";
 

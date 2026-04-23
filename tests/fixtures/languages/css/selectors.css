@@ -1,0 +1,16 @@
+/* base layout */
+body,
+body[data-ready="true"] {
+  margin: 0;
+}
+
+.app-shell > .panel,
+.app-shell > .sidebar {
+  padding: 1rem;
+}
+
+button.primary:hover::before {
+  content: "";
+}
+
+@import url("theme.css");

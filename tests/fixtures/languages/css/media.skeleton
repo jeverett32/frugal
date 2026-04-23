@@ -1,0 +1,11 @@
+@media (min-width: 48rem) {
+  .layout
+  nav.primary
+  @supports (display: subgrid) {
+    .layout__main
+  }
+}
+@container sidebar (min-width: 20rem) {
+  .card-list
+}
+@keyframes pulse

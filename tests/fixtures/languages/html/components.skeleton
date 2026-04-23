@@ -1,0 +1,8 @@
+title: Account Area
+headings: h1 Account
+includes: style:inline; script:inline [module]
+structure:
+- app-shell#app.shell.ready
+  - nav-tabs.sticky
+  - main-panel.layout
+    - profile-card#profile

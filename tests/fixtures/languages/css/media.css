@@ -1,0 +1,26 @@
+@media (min-width: 48rem) {
+  .layout {
+    display: grid;
+  }
+
+  nav.primary {
+    position: sticky;
+  }
+
+  @supports (display: subgrid) {
+    .layout__main {
+      grid-template-columns: subgrid;
+    }
+  }
+}
+
+@container sidebar (min-width: 20rem) {
+  .card-list {
+    gap: 1rem;
+  }
+}
+
+@keyframes pulse {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}

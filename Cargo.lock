@@ -171,6 +171,7 @@ dependencies = [
  "clap",
  "ignore",
  "serde",
+ "serde_json",
  "toml",
  "tree-sitter",
  "tree-sitter-go",

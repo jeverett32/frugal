@@ -1,0 +1,4 @@
+body, body[data-ready="true"]
+.app-shell > .panel, .app-shell > .sidebar
+button.primary:hover::before
+@import url("theme.css")

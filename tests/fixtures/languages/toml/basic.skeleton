@@ -1,0 +1,7 @@
+dependencies:
+  clap = <string>
+  features: [len=2]
+  serde = <string>
+package:
+  name = <string>
+  version = <string>

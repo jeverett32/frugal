@@ -1,10 +1,17 @@
 use std::path::Path;
 
+mod css;
 mod go;
+mod html;
 mod javascript;
+mod json;
+mod markdown;
 mod python;
 mod rust;
+mod shell;
+mod toml;
 mod typescript;
+mod yaml;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SkeletonOutput {
@@ -24,22 +31,35 @@ pub fn skeletonize(path: &Path, source: &str) -> SkeletonOutput {
         Language::JavaScript => javascript::skeletonize(path, source),
         Language::TypeScript => typescript::skeletonize(path, source),
         Language::Go => go::skeletonize(path, source),
+        Language::Html => html::skeletonize(path, source),
+        Language::Css => css::skeletonize(path, source),
+        Language::Yaml => yaml::skeletonize(path, source),
+        Language::Shell => shell::skeletonize(path, source),
+        Language::Json => json::skeletonize(path, source),
+        Language::Markdown => markdown::skeletonize(path, source),
+        Language::Toml => toml::skeletonize(path, source),
         Language::Unknown => unknown_placeholder(path),
     }
 }
 
 pub fn fence_label_for_path(path: &Path) -> Option<&'static str> {
     match path.extension().and_then(|ext| ext.to_str()) {
+        Some("html" | "htm") => Some("html"),
+        Some("css") => Some("css"),
         Some("md") => Some("markdown"),
         Some("rs") => Some("rust"),
         Some("py") => Some("python"),
         Some("js" | "jsx" | "mjs" | "cjs") => Some("javascript"),
         Some("ts" | "tsx" | "mts" | "cts") => Some("typescript"),
         Some("go") => Some("go"),
+        Some("sh" | "bash" | "zsh") => Some("bash"),
         Some("toml") => Some("toml"),
         Some("json") => Some("json"),
         Some("yml" | "yaml") => Some("yaml"),
         Some("txt") => Some("text"),
+        _ if path.file_name().and_then(|name| name.to_str()) == Some("Dockerfile") => {
+            Some("dockerfile")
+        }
         _ => None,
     }
 }
@@ -66,6 +86,13 @@ pub enum Language {
     JavaScript,
     TypeScript,
     Go,
+    Html,
+    Css,
+    Yaml,
+    Shell,
+    Json,
+    Markdown,
+    Toml,
     Unknown,
 }
 
@@ -76,6 +103,16 @@ pub fn language_for_path(path: &Path) -> Language {
         Some("js" | "jsx" | "mjs" | "cjs") => Language::JavaScript,
         Some("ts" | "tsx" | "mts" | "cts") => Language::TypeScript,
         Some("go") => Language::Go,
+        Some("html" | "htm") => Language::Html,
+        Some("css") => Language::Css,
+        Some("yml" | "yaml") => Language::Yaml,
+        Some("json") => Language::Json,
+        Some("md") => Language::Markdown,
+        Some("toml") => Language::Toml,
+        Some("sh" | "bash" | "zsh") => Language::Shell,
+        _ if path.file_name().and_then(|name| name.to_str()) == Some("Dockerfile") => {
+            Language::Shell
+        }
         _ => Language::Unknown,
     }
 }
@@ -88,6 +125,13 @@ impl Language {
             Self::JavaScript => Some("javascript"),
             Self::TypeScript => Some("typescript"),
             Self::Go => Some("go"),
+            Self::Html => Some("html"),
+            Self::Css => Some("css"),
+            Self::Yaml => Some("yaml"),
+            Self::Shell => Some("shell"),
+            Self::Json => Some("json"),
+            Self::Markdown => Some("markdown"),
+            Self::Toml => Some("toml"),
             Self::Unknown => None,
         }
     }
@@ -158,6 +202,32 @@ mod tests {
 
         assert_eq!(left.fence_label, "python");
         assert_eq!(right.fence_label, "python");
+        assert!(!left.is_placeholder);
+        assert!(!right.is_placeholder);
+        assert_ne!(left.body, right.body);
+    }
+
+    #[test]
+    fn markdown_skeleton_depends_on_source() {
+        let path = PathBuf::from("docs/guide.md");
+        let left = skeletonize(&path, "# Left\n");
+        let right = skeletonize(&path, "# Right\n");
+
+        assert_eq!(left.fence_label, "markdown");
+        assert_eq!(right.fence_label, "markdown");
+        assert!(!left.is_placeholder);
+        assert!(!right.is_placeholder);
+        assert_ne!(left.body, right.body);
+    }
+
+    #[test]
+    fn html_skeleton_depends_on_source() {
+        let path = PathBuf::from("index.html");
+        let left = skeletonize(&path, "<main id=\"left\"></main>\n");
+        let right = skeletonize(&path, "<main id=\"right\"></main>\n");
+
+        assert_eq!(left.fence_label, "html");
+        assert_eq!(right.fence_label, "html");
         assert!(!left.is_placeholder);
         assert!(!right.is_placeholder);
         assert_ne!(left.body, right.body);

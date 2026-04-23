@@ -1,0 +1,9 @@
+{
+  "name": "frugal",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "keywords": ["ai", "cache"]
+}

@@ -1,0 +1,4 @@
+:root
+.hero
+@media (min-width: 800px)
+.hero

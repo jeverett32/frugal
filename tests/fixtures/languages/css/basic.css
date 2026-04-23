@@ -1,0 +1,13 @@
+:root {
+  --bg: white;
+}
+
+.hero {
+  color: red;
+}
+
+@media (min-width: 800px) {
+  .hero {
+    display: grid;
+  }
+}

@@ -3,7 +3,20 @@ use std::error::Error;
 use std::fmt;
 
 pub const CONFIG_VERSION: u32 = 1;
-const DEFAULT_LANGUAGES: &[&str] = &["python", "rust", "javascript", "typescript", "go"];
+const DEFAULT_LANGUAGES: &[&str] = &[
+    "python",
+    "rust",
+    "javascript",
+    "typescript",
+    "go",
+    "html",
+    "css",
+    "yaml",
+    "shell",
+    "json",
+    "markdown",
+    "toml",
+];
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
@@ -119,7 +132,7 @@ mod tests {
 
         assert_eq!(
             rendered,
-            "version = 1\n\n[foundation]\npinned = []\n\n[languages]\nenabled = [\"python\", \"rust\", \"javascript\", \"typescript\", \"go\"]\n"
+            "version = 1\n\n[foundation]\npinned = []\n\n[languages]\nenabled = [\"python\", \"rust\", \"javascript\", \"typescript\", \"go\", \"html\", \"css\", \"yaml\", \"shell\", \"json\", \"markdown\", \"toml\"]\n"
         );
         assert_eq!(
             Config::parse(&rendered).expect("rendered config should parse"),
@@ -130,7 +143,7 @@ mod tests {
     #[test]
     fn config_round_trip_with_pinned_paths() {
         let input =
-            "version = 1\n\n[foundation]\npinned = [\"AGENTS.md\", \"CLAUDE.md\"]\n\n[languages]\nenabled = [\"python\", \"rust\", \"javascript\", \"typescript\", \"go\"]\n";
+            "version = 1\n\n[foundation]\npinned = [\"AGENTS.md\", \"CLAUDE.md\"]\n\n[languages]\nenabled = [\"python\", \"rust\", \"javascript\", \"typescript\", \"go\", \"html\", \"css\", \"yaml\", \"shell\", \"json\", \"markdown\", \"toml\"]\n";
 
         let config = Config::parse(input).expect("config should parse");
 
@@ -146,7 +159,14 @@ mod tests {
                 "rust".to_string(),
                 "javascript".to_string(),
                 "typescript".to_string(),
-                "go".to_string()
+                "go".to_string(),
+                "html".to_string(),
+                "css".to_string(),
+                "yaml".to_string(),
+                "shell".to_string(),
+                "json".to_string(),
+                "markdown".to_string(),
+                "toml".to_string()
             ]
         );
         assert_eq!(config.render().expect("config should render"), input);

@@ -1,0 +1,7 @@
+keywords: [len=2]
+  -: <string>
+name: <string>
+private: <bool>
+scripts:
+  build: <string>
+  dev: <string>

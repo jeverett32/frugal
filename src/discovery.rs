@@ -320,7 +320,10 @@ mod tests {
 
         let selection = build_selection(&repo, &Config::default(), &[]).expect("selection builds");
 
-        assert_paths(&selection.secondary, &["src/also_kept.rs", "src/kept.py"]);
+        assert_paths(
+            &selection.secondary,
+            &["notes.md", "src/also_kept.rs", "src/kept.py"],
+        );
     }
 
     #[test]

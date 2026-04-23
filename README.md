@@ -350,7 +350,7 @@ version = 1
 pinned = ["AGENTS.md", "CLAUDE.md"]
 
 [languages]
-enabled = ["python", "rust", "javascript", "typescript", "go"]
+enabled = ["python", "rust", "javascript", "typescript", "go", "html", "css", "yaml", "shell", "json", "markdown", "toml"]
 ```
 
 Rules:
@@ -368,6 +368,13 @@ Current real skeletonizers:
 - Go
 - JavaScript
 - TypeScript
+- HTML
+- CSS
+- YAML
+- Shell
+- JSON
+- Markdown
+- TOML
 
 Skeleton output focuses on high-signal structure:
 

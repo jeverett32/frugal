@@ -1,0 +1,7 @@
+services:
+  web:
+    image: app
+    ports:
+      - "3000:3000"
+  worker:
+    command: run
