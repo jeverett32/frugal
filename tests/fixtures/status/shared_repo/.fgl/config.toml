@@ -1,0 +1,4 @@
+version = 1
+
+[foundation]
+pinned_paths = ["AGENTS.md", "CLAUDE.md"]

@@ -1,0 +1,20 @@
+[package]
+name = "frugal"
+version = "0.1.0"
+edition = "2021"
+default-run = "fgl"
+
+[lib]
+name = "frugal"
+path = "src/lib.rs"
+
+[[bin]]
+name = "fgl"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5.39", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
+tree-sitter = "0.25.10"
+tree-sitter-python = "0.25.0"
+toml = "0.8.23"
