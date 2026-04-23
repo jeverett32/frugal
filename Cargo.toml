@@ -3,6 +3,14 @@ name = "frugal"
 version = "0.1.0"
 edition = "2021"
 default-run = "fgl"
+description = "Cache-aware context packer for AI-assisted development"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/jeverett32/frugal"
+homepage = "https://github.com/jeverett32/frugal"
+documentation = "https://github.com/jeverett32/frugal#readme"
+keywords = ["ai", "cli", "prompt", "cache", "developer-tools"]
+categories = ["command-line-utilities", "development-tools"]
 
 [lib]
 name = "frugal"

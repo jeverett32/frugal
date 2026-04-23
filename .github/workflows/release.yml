@@ -59,6 +59,7 @@ jobs:
           cp "target/${{ matrix.target }}/release/${{ matrix.binary }}" "$dir/"
           cp README.md LICENSE "$dir/"
           tar -czf "${dir}.tar.gz" "$dir"
+          shasum -a 256 "${dir}.tar.gz" > "${dir}.tar.gz.sha256"
 
       - name: Package windows archive
         if: matrix.archive == 'zip'
@@ -70,6 +71,7 @@ jobs:
           Copy-Item "target/${{ matrix.target }}/release/${{ matrix.binary }}" "$dir/"
           Copy-Item README.md, LICENSE "$dir/"
           Compress-Archive -Path "$dir/*" -DestinationPath "$dir.zip"
+          Get-FileHash "$dir.zip" -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $($dir).zip" } | Out-File -Encoding ascii "$dir.zip.sha256"
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
@@ -77,7 +79,9 @@ jobs:
           name: release-${{ matrix.target }}
           path: |
             frugal-${{ github.ref_name }}-${{ matrix.target }}.tar.gz
+            frugal-${{ github.ref_name }}-${{ matrix.target }}.tar.gz.sha256
             frugal-${{ github.ref_name }}-${{ matrix.target }}.zip
+            frugal-${{ github.ref_name }}-${{ matrix.target }}.zip.sha256
 
   publish:
     name: publish-release
@@ -85,12 +89,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
           pattern: release-*
           merge-multiple: true
+
+      - name: Add installer script
+        run: cp scripts/install.sh dist/install.sh
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2

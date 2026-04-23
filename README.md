@@ -165,6 +165,14 @@ Token estimate uses `ceil(bytes / 4)`.
 
 ## Install
 
+One-line install from GitHub Releases:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jeverett32/frugal/main/scripts/install.sh | bash
+```
+
+This installs `fgl` into `~/.local/bin` by default.
+
 Install from local checkout:
 
 ```bash
@@ -183,6 +191,13 @@ Verify:
 
 ```bash
 fgl --help
+```
+
+After install, `fgl` is global for your user account, so you can run it inside any repo:
+
+```bash
+cd /path/to/any/project
+fgl init
 ```
 
 ## Quick Start
