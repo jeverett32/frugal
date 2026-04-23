@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="frugal logo">
+  <rect width="256" height="256" rx="56" fill="#0f172a"/>
+  <circle cx="128" cy="128" r="86" fill="none" stroke="#22c55e" stroke-width="14"/>
+  <text x="128" y="144" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="56" font-weight="700" fill="#e2e8f0">
+    fgl
+  </text>
+</svg>
+

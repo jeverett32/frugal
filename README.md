@@ -1,3 +1,12 @@
+<!--
+Logo
+----
+Drop your logo at `docs/assets/logo.svg` (or `docs/assets/logo.png`) and update the `src=` below if needed.
+-->
+<p align="center">
+  <img src="docs/assets/logo.svg" alt="frugal logo" width="120" />
+</p>
+
 <h1 align="center">frugal</h1>
 
 <p align="center">
@@ -171,6 +180,14 @@ With `frugal`:
  stable prefix                  volatile tail
 ```
 
+<!--
+Screenshot idea: before/after pack layout
+Good place for a simple diagram screenshot or terminal capture showing `fgl pack` output headings.
+Add: `docs/assets/screenshots/slabs.png`
+Then uncomment:
+![Foundation / Skeletons / Active Zone layout](docs/assets/screenshots/slabs.png)
+-->
+
 That is the core bet:
 
 - keep most of the prompt stable
@@ -317,6 +334,13 @@ prefix=123 active=18 ratio=6.83 files=27 langs=4
 
 Token estimate uses `ceil(bytes / 4)`.
 
+<!--
+Screenshot idea: `fgl status` output
+Add: `docs/assets/screenshots/status.png`
+Then uncomment:
+![`fgl status` output](docs/assets/screenshots/status.png)
+-->
+
 ### `fgl gain`
 
 Reports estimated token savings from pack history.
@@ -422,6 +446,40 @@ Pipe directly:
 fgl pack src/main.rs src/lib.rs
 ```
 
+## Screenshots
+
+Add screenshots under `docs/assets/screenshots/` and uncomment the images below.
+
+### `fgl pack` command + output
+
+Shows how you build a deterministic pack and where it goes.
+
+<!--
+Add: `docs/assets/screenshots/pack.png`
+Then uncomment:
+![`fgl pack` command](docs/assets/screenshots/pack.png)
+-->
+
+### Generated `CONTEXT.md` structure
+
+Shows the three slabs (Foundation / Secondary Skeletons / Active Zone) in the final markdown.
+
+<!--
+Add: `docs/assets/screenshots/context.png`
+Then uncomment:
+![Generated `CONTEXT.md` structure](docs/assets/screenshots/context.png)
+-->
+
+### `fgl gain` summary
+
+Shows estimated savings over time and top active files.
+
+<!--
+Add: `docs/assets/screenshots/gain.png`
+Then uncomment:
+![`fgl gain` output](docs/assets/screenshots/gain.png)
+-->
+
 ## Example Workflow
 
 Typical loop:
@@ -468,6 +526,13 @@ pinned = ["AGENTS.md", "CLAUDE.md"]
 [languages]
 enabled = ["python", "rust", "javascript", "typescript", "go", "html", "css", "yaml", "shell", "json", "markdown", "toml"]
 ```
+
+<!--
+Screenshot idea: `.fgl/config.toml` in a real repo
+Add: `docs/assets/screenshots/config.png`
+Then uncomment:
+![Example `.fgl/config.toml`](docs/assets/screenshots/config.png)
+-->
 
 Rules:
 
