@@ -64,7 +64,7 @@ This installs `fgl.exe` into `%USERPROFILE%\.local\bin` by default.
 Cargo install:
 
 ```bash
-cargo install --git https://github.com/jeverett32/frugal --tag v0.1.0
+cargo install --git https://github.com/jeverett32/frugal --tag v0.2.0
 ```
 
 Local checkout install:
@@ -89,7 +89,7 @@ fgl init
 
 Windows manual fallback:
 
-- download `frugal-v0.1.0-x86_64-pc-windows-msvc.zip` from Releases
+- download `frugal-v0.2.0-x86_64-pc-windows-msvc.zip` from Releases
 - extract `fgl.exe`
 - place it in a directory on your `PATH`
 - verify with `fgl --version`
