@@ -30,17 +30,107 @@ It is not a proxy. It does not send network requests. It does not sit between yo
 
 It gives you a deterministic `CONTEXT.md` or stdout stream that is easier to cache, cheaper to resend, and easier to reason about.
 
-## Why This Exists
+## Problem
 
-Most AI coding workflows pay repeatedly for broad repo context that barely changes.
+AI coding workflows waste money and latency on repeated context.
 
-`frugal` attacks that problem by separating:
+A typical loop looks like this:
 
-- stable, high-value project context
-- compact language skeletons for broad orientation
-- raw active file bodies only where exact source matters
+1. send broad repo context
+2. change one or two active files
+3. send broad repo context again
+4. repeat all day
 
-That keeps more of the prompt prefix stable across requests, which is the part most likely to benefit from provider-side prompt caching.
+The problem is that the expensive part of the prompt often barely changed, but most tooling still rebuilds or reorders that context every run.
+
+That hurts in three ways:
+
+- **cost:** you keep paying for the same large prefix
+- **latency:** large prompts take longer to process
+- **cache misses:** tiny ordering changes can break provider-side prompt caching
+
+For many providers, cached input pricing can be dramatically cheaper than uncached pricing. In the best case, cached input can be around a **90% discount** versus full-price input. The exact discount depends on provider and model, but the principle is the same:
+
+> if the prefix stays stable, repeated calls can get much cheaper
+
+## Theoretical Solution
+
+The theoretical solution is simple:
+
+1. keep the prompt prefix as stable as possible
+2. push volatile content to the end
+3. only send raw source where exact body text matters
+
+If you can hold most of the prompt constant across requests, then the provider can recognize and reuse cached prefix work instead of charging full price for the same context over and over.
+
+That means the right abstraction is not “read fewer files.”
+
+It is:
+
+- keep **stable context** first
+- keep **broad context** compact
+- keep **changing context** last
+
+## How `frugal` Solves It
+
+`frugal` turns that caching idea into a concrete context format.
+
+It separates repo state into three slabs:
+
+### 1. Foundation
+
+Pinned files that should stay first and stay stable.
+
+Examples:
+
+- `AGENTS.md`
+- `CLAUDE.md`
+- other high-value project docs you choose to pin
+
+### 2. Secondary Skeletons
+
+Compact structural summaries of the broader codebase.
+
+Instead of shipping full file bodies for every relevant source file, `frugal` extracts high-signal structure:
+
+- function and method signatures
+- classes, structs, interfaces, enums, traits, type aliases
+- attached docs where supported
+- top-level constants and declarations
+
+This keeps orientation value while cutting prompt bulk.
+
+### 3. Active Zone
+
+Raw file bodies for the files you are actively editing.
+
+This is the volatile tail of the prompt. It changes often, so `frugal` keeps it last on purpose.
+
+## Why This Layout Matters
+
+This layout is meant to increase cacheable prefix stability:
+
+- **Foundation** changes rarely
+- **Secondary Skeletons** change less often than raw full-source context
+- **Active Zone** absorbs most day-to-day churn
+
+So instead of rebuilding one giant unstable blob, you get:
+
+- a stable prefix
+- a compact middle layer
+- a volatile tail
+
+That is the core economic idea behind `frugal`.
+
+## What `frugal` Is Not
+
+- not a proxy
+- not a model router
+- not a network service
+- not a TUI
+- not a magic “cache hit guarantee”
+
+It is a deterministic local packer that makes cache-friendly prompt structure easier to produce on purpose.
 
 ## What `fgl` Does
 
