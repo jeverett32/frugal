@@ -12,12 +12,24 @@
   <a href="https://github.com/jeverett32/frugal/actions/workflows/ci.yml">
     <img src="https://img.shields.io/github/actions/workflow/status/jeverett32/frugal/ci.yml?branch=main&label=ci" alt="CI">
   </a>
+  <a href="https://github.com/jeverett32/frugal/releases">
+    <img src="https://img.shields.io/github/v/release/jeverett32/frugal" alt="Release">
+  </a>
   <a href="#license">
     <img src="https://img.shields.io/badge/license-MIT-4b5563" alt="MIT License">
   </a>
   <a href="https://www.rust-lang.org/">
     <img src="https://img.shields.io/badge/rust-2021-000000?logo=rust" alt="Rust 2021">
   </a>
+</p>
+
+<p align="center">
+  <a href="#install">Install</a> &bull;
+  <a href="#problem">Problem</a> &bull;
+  <a href="#how-frugal-solves-it">How It Works</a> &bull;
+  <a href="#quick-start">Quick Start</a> &bull;
+  <a href="#config">Config</a> &bull;
+  <a href="/home/everjohn/projects/frugal/CONTRIBUTING.md">Contributing</a>
 </p>
 
 `frugal` is a local CLI for assembling AI context in a stable order:
@@ -29,6 +41,42 @@
 It is not a proxy. It does not send network requests. It does not sit between you and a model provider.
 
 It gives you a deterministic `CONTEXT.md` or stdout stream that is easier to cache, cheaper to resend, and easier to reason about.
+
+## Install
+
+Recommended one-line install from GitHub Releases:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jeverett32/frugal/main/scripts/install.sh | bash
+```
+
+This installs `fgl` into `~/.local/bin` by default.
+
+Cargo install:
+
+```bash
+cargo install --git https://github.com/jeverett32/frugal --tag v0.1.0
+```
+
+Local checkout install:
+
+```bash
+cargo install --path .
+```
+
+Verify:
+
+```bash
+fgl --version
+fgl --help
+```
+
+After install, `fgl` is global for your user account, so you can run it inside any repo:
+
+```bash
+cd /path/to/any/project
+fgl init
+```
 
 ## Problem
 
@@ -52,6 +100,29 @@ That hurts in three ways:
 For many providers, cached input pricing can be dramatically cheaper than uncached pricing. In the best case, cached input can be around a **90% discount** versus full-price input. The exact discount depends on provider and model, but the principle is the same:
 
 > if the prefix stays stable, repeated calls can get much cheaper
+
+## Simple Mental Model
+
+Without `frugal`:
+
+```text
+[big raw repo context + docs + active files]
+one unstable blob
+small edits can reshuffle the whole prompt
+```
+
+With `frugal`:
+
+```text
+[Foundation + Secondary Skeletons] [Active Zone]
+ stable prefix                  volatile tail
+```
+
+That is the core bet:
+
+- keep most of the prompt stable
+- keep broad repo context compact
+- let active file churn stay at the end
 
 ## Theoretical Solution
 
@@ -122,6 +193,36 @@ So instead of rebuilding one giant unstable blob, you get:
 
 That is the core economic idea behind `frugal`.
 
+## Who This Is For
+
+`frugal` is useful if you:
+
+- use Claude, Codex, Gemini, or similar tools repeatedly in the same repo
+- work in medium or large codebases where broad context is expensive
+- want a stable context prefix instead of ad-hoc file dumping
+- care about prompt cost, latency, or cache reuse
+
+`frugal` is probably not worth it if you:
+
+- only work in tiny repos
+- mostly do one-off prompts
+- always need raw full-file bodies for everything
+- do not care about provider-side prompt caching
+
+## Why Not Just Read Files Directly?
+
+Because raw file reading solves a different problem.
+
+Reading files directly gives exact source.
+
+`frugal` is trying to optimize repeated context economics:
+
+- broad context should be compact
+- stable context should stay stable
+- exact raw source should be reserved for active work
+
+You still read raw files when you need them. `frugal` just stops treating every prompt like a full repo dump.
+
 ## What `frugal` Is Not
 
 - not a proxy
@@ -163,43 +264,6 @@ prefix=123 active=18 ratio=6.83 files=27 langs=4
 
 Token estimate uses `ceil(bytes / 4)`.
 
-## Install
-
-One-line install from GitHub Releases:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/jeverett32/frugal/main/scripts/install.sh | bash
-```
-
-This installs `fgl` into `~/.local/bin` by default.
-
-Install from local checkout:
-
-```bash
-cargo install --path .
-```
-
-Install from GitHub once tagged:
-
-```bash
-cargo install --git https://github.com/jeverett32/frugal --tag v0.1.0
-```
-
-Or download a prebuilt binary from the GitHub Releases page for your platform.
-
-Verify:
-
-```bash
-fgl --help
-```
-
-After install, `fgl` is global for your user account, so you can run it inside any repo:
-
-```bash
-cd /path/to/any/project
-fgl init
-```
-
 ## Quick Start
 
 Initialize repo once:
@@ -236,6 +300,26 @@ Typical loop:
 4. read raw files only when exact write/edit context is needed
 
 That is the behavior `fgl init` writes into managed agent docs.
+
+## Example Value
+
+On repeated coding loops, `frugal` is trying to turn this:
+
+- resend broad repo context every time
+- pay full input price repeatedly
+- lose cacheability when prompt order shifts
+
+into this:
+
+- keep Foundation and Skeletons stable
+- change only Active Zone for small edits
+- maximize chance that the provider can treat most of the prefix as cached input
+
+Exact savings depend on provider, model, and workflow, but the economic target is straightforward:
+
+- fewer raw repeated tokens
+- more stable cached prefix
+- less prompt churn from small edits
 
 ## Config
 
