@@ -9,11 +9,11 @@ Portrait logos: prefer setting `height=` (not `width=`) to preserve aspect ratio
 </p>
 
 <p align="center">
-  <strong>Cache-aware context packing for AI-assisted development.</strong>
+  <strong>Deterministic context packing for open-source AI workflows.</strong>
 </p>
 
 <p align="center">
-  `fgl` builds deterministic prompt context so more of your expensive prefix stays stable across runs.
+  `fgl` assembles repo context in a stable order so repeated prompts stay cacheable and cheap.
 </p>
 
 <p align="center">
@@ -47,7 +47,7 @@ Portrait logos: prefer setting `height=` (not `width=`) to preserve aspect ratio
 2. Secondary Skeletons
 3. Active Zone
 
-It is not a proxy. It does not send network requests. It does not sit between you and a model provider.
+It is built for workflows where **you control the prompt** — opencode, aider, raw API calls, web UIs, local models. It is not a proxy. It does not send network requests. It does not sit between you and a model provider.
 
 It gives you a deterministic `CONTEXT.md` or stdout stream that is easier to cache, cheaper to resend, and easier to reason about.
 
@@ -72,7 +72,7 @@ This installs `fgl.exe` into `%USERPROFILE%\.local\bin` by default.
 Cargo install:
 
 ```bash
-cargo install --git https://github.com/jeverett32/frugal --tag v0.2.0
+cargo install --git https://github.com/jeverett32/frugal --tag v0.3.0
 ```
 
 Local checkout install:
@@ -97,7 +97,7 @@ fgl init
 
 Windows manual fallback:
 
-- download `frugal-v0.2.0-x86_64-pc-windows-msvc.zip` from Releases
+- download `frugal-v0.3.0-x86_64-pc-windows-msvc.zip` from Releases
 - extract `fgl.exe`
 - place it in a directory on your `PATH`
 - verify with `fgl --version`
@@ -141,26 +141,28 @@ rm -rf ~/.local/share/fgl/            # remove global gain registry
 
 ## Problem
 
-AI coding workflows waste money and latency on repeated context.
+When you control the prompt — opencode, aider, raw API calls, web UIs, local models — repeated context is expensive.
 
 A typical loop looks like this:
 
-1. send broad repo context
+1. assemble broad repo context
 2. change one or two active files
-3. send broad repo context again
+3. reassemble the same broad context again
 4. repeat all day
 
-The problem is that the expensive part of the prompt often barely changed, but most tooling still rebuilds or reorders that context every run.
+The problem is that the expensive part of the prompt barely changed, but the context gets rebuilt or reordered every run. That breaks provider-side caching and you pay full price each time.
 
 That hurts in three ways:
 
 - **cost:** you keep paying for the same large prefix
 - **latency:** large prompts take longer to process
-- **cache misses:** tiny ordering changes can break provider-side prompt caching
+- **cache misses:** tiny ordering changes break provider-side prompt caching
 
-For many providers, cached input pricing can be dramatically cheaper than uncached pricing. In the best case, cached input can be around a **90% discount** versus full-price input. The exact discount depends on provider and model, but the principle is the same:
+For many providers, cached input can be around a **90% discount** versus uncached. The exact discount depends on provider and model, but the principle is the same:
 
-> if the prefix stays stable, repeated calls can get much cheaper
+> if the prefix stays stable, repeated calls get much cheaper
+
+> **Note:** fully agentic tools like Claude Code and Codex manage their own context and caching. `frugal` is built for workflows where you are the one assembling the prompt.
 
 ## Simple Mental Model
 
@@ -264,19 +266,19 @@ That is the core economic idea behind `frugal`.
 
 ## Who This Is For
 
-`frugal` is useful if you:
+`frugal` is built for workflows where you assemble the prompt yourself:
 
-- use Claude, Codex, Gemini, or similar tools repeatedly in the same repo
-- work in medium or large codebases where broad context is expensive
-- want a stable context prefix instead of ad-hoc file dumping
-- care about prompt cost, latency, or cache reuse
+- **opencode** — context goes into the prompt as a blob; stable ordering = cache hits
+- **aider** — you control what context gets sent each session
+- **raw API calls** — building prompts programmatically or in scripts
+- **web UIs** — pasting context into Claude, ChatGPT, or similar
+- **local models** — tight context windows where every token counts
 
 `frugal` is probably not worth it if you:
 
+- use Claude Code, Codex, or similar fully agentic tools — they manage context and caching themselves
 - only work in tiny repos
-- mostly do one-off prompts
-- always need raw full-file bodies for everything
-- do not care about provider-side prompt caching
+- mostly do one-off prompts where caching doesn't compound
 
 ## Why Not Just Read Files Directly?
 
@@ -481,14 +483,20 @@ Then uncomment:
 
 ## Example Workflow
 
-Typical loop:
+Typical loop with opencode, aider, or a raw API script:
 
-1. run `fgl status` before starting work
-2. run `fgl pack <active-files...>` instead of reading broad repo state raw
-3. keep Foundation stable
-4. read raw files only when exact write/edit context is needed
+1. run `fgl init` once per repo to set up Foundation and config
+2. run `fgl pack --output CONTEXT.md <active-files...>` before each session
+3. pass `CONTEXT.md` to your tool or paste it into your prompt
+4. keep Foundation stable — it forms the cacheable prefix
+5. only swap out Active Zone files as your work changes
 
-That is the behavior `fgl init` writes into managed agent docs.
+`fgl status` gives a quick token estimate before you pack:
+
+```bash
+fgl status src/main.rs
+# prefix=123 active=18 ratio=6.83 files=27 langs=4
+```
 
 ## Example Value
 
