@@ -100,7 +100,9 @@ jobs:
           merge-multiple: true
 
       - name: Add installer script
-        run: cp scripts/install.sh dist/install.sh
+        run: |
+          cp scripts/install.sh dist/install.sh
+          cp scripts/install.ps1 dist/install.ps1
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2

@@ -52,6 +52,14 @@ curl -fsSL https://raw.githubusercontent.com/jeverett32/frugal/main/scripts/inst
 
 This installs `fgl` into `~/.local/bin` by default.
 
+Windows PowerShell install:
+
+```powershell
+irm https://raw.githubusercontent.com/jeverett32/frugal/main/scripts/install.ps1 | iex
+```
+
+This installs `fgl.exe` into `%USERPROFILE%\.local\bin` by default.
+
 Cargo install:
 
 ```bash
@@ -77,6 +85,13 @@ After install, `fgl` is global for your user account, so you can run it inside a
 cd /path/to/any/project
 fgl init
 ```
+
+Windows manual fallback:
+
+- download `frugal-v0.1.0-x86_64-pc-windows-msvc.zip` from Releases
+- extract `fgl.exe`
+- place it in a directory on your `PATH`
+- verify with `fgl --version`
 
 ## Problem
 
