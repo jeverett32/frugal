@@ -28,6 +28,7 @@
   <a href="#problem">Problem</a> &bull;
   <a href="#how-frugal-solves-it">How It Works</a> &bull;
   <a href="#quick-start">Quick Start</a> &bull;
+  <a href="/home/everjohn/projects/frugal/docs/BENCHMARKS.md">Benchmarks</a> &bull;
   <a href="#config">Config</a> &bull;
   <a href="/home/everjohn/projects/frugal/CONTRIBUTING.md">Contributing</a>
 </p>
@@ -335,6 +336,8 @@ Exact savings depend on provider, model, and workflow, but the economic target i
 - fewer raw repeated tokens
 - more stable cached prefix
 - less prompt churn from small edits
+
+To generate real numbers on your own repos, see [docs/BENCHMARKS.md](/home/everjohn/projects/frugal/docs/BENCHMARKS.md).
 
 ## Config
 
