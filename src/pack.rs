@@ -19,8 +19,12 @@ impl PackCommand for PackRunner {
         let pack = materialize_selection(&selection)?;
         let rendered = render_markdown(&pack);
 
-        let mut stdout = io::stdout().lock();
-        stdout.write_all(rendered.as_bytes()).map_err(Error::io)
+        if let Some(output_path) = &args.output {
+            fs::write(output_path, rendered).map_err(Error::io)
+        } else {
+            let mut stdout = io::stdout().lock();
+            stdout.write_all(rendered.as_bytes()).map_err(Error::io)
+        }
     }
 }
 
@@ -243,7 +247,7 @@ mod tests {
         write_file(&repo, "focus.py", "print('focus')\r\n");
 
         let mut config = Config::default();
-        config.foundation.pinned_paths = vec!["AGENTS.md".into()];
+        config.foundation.pinned = vec!["AGENTS.md".into()];
 
         let selection = build_selection(&repo, &config, &[PathBuf::from("focus.py")])
             .expect("selection builds");
@@ -253,7 +257,10 @@ mod tests {
         assert_eq!(pack.secondary_skeletons.len(), 1);
         assert_eq!(pack.active_zone.len(), 1);
         assert_eq!(pack.foundation[0].path, PathBuf::from("AGENTS.md"));
-        assert_eq!(pack.secondary_skeletons[0].path, PathBuf::from("src/lib.rs"));
+        assert_eq!(
+            pack.secondary_skeletons[0].path,
+            PathBuf::from("src/lib.rs")
+        );
         assert_eq!(pack.active_zone[0].path, PathBuf::from("focus.py"));
         assert_eq!(pack.active_zone[0].body, "print('focus')\r\n");
     }

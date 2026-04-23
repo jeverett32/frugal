@@ -1,0 +1,41 @@
+/// Adds two numbers.
+pub fn add(left: i32, right: i32) -> i32 { ... }
+
+/// Point docs.
+pub struct Point {
+    pub x: i32,
+    pub y: i32,
+}
+
+/// Result docs.
+pub enum Status {
+    Ready,
+    Busy(u32),
+}
+
+/// Alias docs.
+pub type ResultMap<T> = std::collections::BTreeMap<String, T>;
+
+/// Limit docs.
+pub const LIMIT: usize = ...;
+
+/// Cache docs.
+pub static mut CACHE: Option<String> = ...;
+
+/// Trait docs.
+pub trait Worker {
+
+    /// Name docs.
+    fn name(&self) -> &str;
+
+    /// Run docs.
+    fn run(&self) { ... }
+}
+
+impl Point {
+
+    /// Origin docs.
+    pub fn origin() -> Self { ... }
+
+    const fn hidden() -> usize { ... }
+}

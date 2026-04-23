@@ -61,7 +61,10 @@ impl StatusSummary {
         if self.active_tokens == 0 {
             "inf".to_string()
         } else {
-            format!("{:.2}", self.prefix_tokens as f64 / self.active_tokens as f64)
+            format!(
+                "{:.2}",
+                self.prefix_tokens as f64 / self.active_tokens as f64
+            )
         }
     }
 }
@@ -188,7 +191,10 @@ mod tests {
             languages: 1,
         };
 
-        assert_eq!(summary.to_string(), "prefix=3 active=0 ratio=inf files=2 langs=1");
+        assert_eq!(
+            summary.to_string(),
+            "prefix=3 active=0 ratio=inf files=2 langs=1"
+        );
     }
 
     #[test]
@@ -197,7 +203,7 @@ mod tests {
         write(
             &repo,
             ".fgl/config.toml",
-            "version = 1\n\n[foundation]\npinned_paths = [\"AGENTS.md\", \"CLAUDE.md\"]\n",
+            "version = 1\n\n[foundation]\npinned = [\"AGENTS.md\", \"CLAUDE.md\"]\n\n[languages]\nenabled = [\"python\", \"rust\", \"javascript\", \"typescript\", \"go\"]\n",
         );
         write(&repo, "AGENTS.md", "agent rules");
         write(&repo, "CLAUDE.md", "claude guide");

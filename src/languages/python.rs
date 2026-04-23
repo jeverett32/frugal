@@ -30,9 +30,7 @@ pub fn skeletonize(_path: &Path, source: &str) -> SkeletonOutput {
 
 fn render_module(module: Node<'_>, source: &str, output: &mut String) {
     let mut cursor = module.walk();
-    let children = module
-        .named_children(&mut cursor)
-        .collect::<Vec<_>>();
+    let children = module.named_children(&mut cursor).collect::<Vec<_>>();
     let mut items = Vec::new();
 
     if let Some(docstring) = leading_docstring(&children, source) {
@@ -41,9 +39,17 @@ fn render_module(module: Node<'_>, source: &str, output: &mut String) {
 
     for child in children {
         match child.kind() {
-            "function_definition" => items.push((child.start_position().row, render_function(child, source, 0))),
-            "class_definition" => items.push((child.start_position().row, render_class(child, source, 0))),
-            "decorated_definition" => items.push((child.start_position().row, render_decorated(child, source, 0))),
+            "function_definition" => items.push((
+                child.start_position().row,
+                render_function(child, source, 0),
+            )),
+            "class_definition" => {
+                items.push((child.start_position().row, render_class(child, source, 0)))
+            }
+            "decorated_definition" => items.push((
+                child.start_position().row,
+                render_decorated(child, source, 0),
+            )),
             _ => {}
         }
     }
@@ -131,7 +137,9 @@ fn render_class(node: Node<'_>, source: &str, indent: usize) -> String {
 }
 
 fn leading_docstring(children: &[Node<'_>], source: &str) -> Option<String> {
-    children.first().and_then(|node| expression_docstring(*node, source))
+    children
+        .first()
+        .and_then(|node| expression_docstring(*node, source))
 }
 
 fn immediate_docstring(node: Node<'_>, source: &str) -> Option<String> {
@@ -159,7 +167,9 @@ fn expression_docstring(node: Node<'_>, source: &str) -> Option<String> {
 fn docstring_literal(raw: &str) -> String {
     let mut content = raw.trim().to_string();
     for quote in ["\"\"\"", "'''", "\"", "'"] {
-        if content.starts_with(quote) && content.ends_with(quote) && content.len() >= quote.len() * 2
+        if content.starts_with(quote)
+            && content.ends_with(quote)
+            && content.len() >= quote.len() * 2
         {
             content = content[quote.len()..content.len() - quote.len()].to_string();
             break;
@@ -179,7 +189,9 @@ fn header_with_ellipsis(node: Node<'_>, source: &str) -> String {
     let body = node
         .child_by_field_name("body")
         .expect("function/class should have body");
-    let mut header = slice(source, node.start_byte(), body.start_byte()).trim_end().to_string();
+    let mut header = slice(source, node.start_byte(), body.start_byte())
+        .trim_end()
+        .to_string();
     if header.ends_with(':') {
         header.push_str(" ...");
     } else {

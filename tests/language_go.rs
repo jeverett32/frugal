@@ -8,19 +8,19 @@ fn fixture_dir() -> PathBuf {
         .join("tests")
         .join("fixtures")
         .join("languages")
-        .join("python")
+        .join("go")
 }
 
 fn assert_fixture(name: &str) {
-    let source = fs::read_to_string(fixture_dir().join(format!("{name}.py")))
-        .expect("read python fixture source");
+    let source = fs::read_to_string(fixture_dir().join(format!("{name}.go")))
+        .expect("read go fixture source");
     let expected = fs::read_to_string(fixture_dir().join(format!("{name}.skeleton")))
-        .expect("read python fixture skeleton");
-    let virtual_path = PathBuf::from(format!("pkg/{name}.py"));
+        .expect("read go fixture skeleton");
+    let virtual_path = PathBuf::from(format!("pkg/{name}.go"));
 
     let output = skeletonize(&virtual_path, &source);
 
-    assert_eq!(output.fence_label, "python");
+    assert_eq!(output.fence_label, "go");
     assert!(!output.is_placeholder, "fixture {name} marked placeholder");
     assert_eq!(
         output.body, expected,
@@ -29,6 +29,11 @@ fn assert_fixture(name: &str) {
 }
 
 #[test]
-fn class_methods_fixture_matches_expected_skeleton() {
-    assert_fixture("class_methods");
+fn top_level_fixture_matches_expected_skeleton() {
+    assert_fixture("top_level");
+}
+
+#[test]
+fn grouped_fixture_matches_expected_skeleton() {
+    assert_fixture("grouped");
 }

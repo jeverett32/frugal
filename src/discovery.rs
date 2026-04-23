@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::error::{Error, PathOrigin, Result};
 use crate::languages::{self, Language};
+use ignore::WalkBuilder;
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -43,7 +44,7 @@ pub fn build_selection(
         .collect::<HashSet<_>>();
     let foundation = config
         .foundation
-        .pinned_paths
+        .pinned
         .iter()
         .map(|path| to_selected_path(&repo_root, Path::new(path), PathOrigin::Foundation))
         .collect::<Result<Vec<_>>>()?
@@ -55,7 +56,13 @@ pub fn build_selection(
         .chain(foundation.iter())
         .map(|path| repo_path_key(&path.repo_relative_path))
         .collect::<HashSet<_>>();
-    let secondary = discover_secondary(&repo_root, &protected_paths)?;
+    let enabled_languages = config
+        .languages
+        .enabled
+        .iter()
+        .map(|item| item.to_ascii_lowercase())
+        .collect::<HashSet<_>>();
+    let secondary = discover_secondary(&repo_root, &protected_paths, &enabled_languages)?;
 
     Ok(dedup_selection(Selection {
         foundation,
@@ -64,9 +71,18 @@ pub fn build_selection(
     }))
 }
 
-fn discover_secondary(repo_root: &Path, protected_paths: &HashSet<String>) -> Result<Vec<SelectedPath>> {
+fn discover_secondary(
+    repo_root: &Path,
+    protected_paths: &HashSet<String>,
+    enabled_languages: &HashSet<String>,
+) -> Result<Vec<SelectedPath>> {
     let mut relative_paths = Vec::new();
-    collect_repo_files(repo_root, repo_root, protected_paths, &mut relative_paths)?;
+    collect_repo_files(
+        repo_root,
+        protected_paths,
+        enabled_languages,
+        &mut relative_paths,
+    )?;
     relative_paths.sort_by(|left, right| compare_repo_paths(left, right));
 
     relative_paths
@@ -77,42 +93,53 @@ fn discover_secondary(repo_root: &Path, protected_paths: &HashSet<String>) -> Re
 
 fn collect_repo_files(
     root: &Path,
-    current: &Path,
     protected_paths: &HashSet<String>,
+    enabled_languages: &HashSet<String>,
     files: &mut Vec<PathBuf>,
 ) -> Result<()> {
-    for entry in fs::read_dir(current).map_err(Error::io)? {
-        let entry = entry.map_err(Error::io)?;
+    let walker = WalkBuilder::new(root)
+        .hidden(false)
+        .git_ignore(true)
+        .git_exclude(true)
+        .parents(true)
+        .follow_links(false)
+        .build();
+
+    for entry in walker {
+        let entry = entry.map_err(|error| Error::Io(error.to_string()))?;
         let path = entry.path();
-        let file_type = entry.file_type().map_err(Error::io)?;
-        let file_name = entry.file_name();
 
-        if file_type.is_symlink() {
+        if path == root {
             continue;
         }
 
-        if file_type.is_dir() {
-            if skip_directory(&file_name) {
+        if entry.file_type().is_some_and(|kind| kind.is_dir()) {
+            if skip_directory(path.file_name()) {
                 continue;
             }
-
-            collect_repo_files(root, &path, protected_paths, files)?;
             continue;
         }
 
-        if file_type.is_file() {
-            let relative_path = path
-                .strip_prefix(root)
-                .expect("walked path must remain under repo root")
-                .to_path_buf();
-            let path_key = repo_path_key(&relative_path);
-
-            if protected_paths.contains(&path_key) || !languages::is_secondary_eligible(&relative_path) {
-                continue;
-            }
-
-            files.push(relative_path);
+        if !entry.file_type().is_some_and(|kind| kind.is_file()) {
+            continue;
         }
+
+        let relative_path = path
+            .strip_prefix(root)
+            .expect("walked path must remain under repo root")
+            .to_path_buf();
+        let path_key = repo_path_key(&relative_path);
+        let language = languages::language_for_path(&relative_path);
+
+        if path_has_skipped_component(&relative_path)
+            || protected_paths.contains(&path_key)
+            || !languages::is_secondary_eligible(&relative_path)
+            || !language_enabled(language, enabled_languages)
+        {
+            continue;
+        }
+
+        files.push(relative_path);
     }
 
     Ok(())
@@ -129,7 +156,8 @@ fn dedup_selection(selection: Selection) -> Selection {
 }
 
 fn dedup_slab(paths: Vec<SelectedPath>, seen: &mut HashSet<String>) -> Vec<SelectedPath> {
-    paths.into_iter()
+    paths
+        .into_iter()
         .filter(|path| seen.insert(repo_path_key(&path.repo_relative_path)))
         .collect()
 }
@@ -161,7 +189,10 @@ fn to_selected_path(repo_root: &Path, path: &Path, origin: PathOrigin) -> Result
     })
 }
 
-fn to_secondary_selected_path(repo_root: &Path, repo_relative_path: PathBuf) -> Result<SelectedPath> {
+fn to_secondary_selected_path(
+    repo_root: &Path,
+    repo_relative_path: PathBuf,
+) -> Result<SelectedPath> {
     let absolute_path = repo_root.join(&repo_relative_path);
 
     Ok(SelectedPath {
@@ -179,11 +210,23 @@ fn repo_path_key(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
 }
 
-fn skip_directory(file_name: &std::ffi::OsStr) -> bool {
+fn skip_directory(file_name: Option<&std::ffi::OsStr>) -> bool {
     matches!(
-        file_name.to_string_lossy().as_ref(),
+        file_name.unwrap_or_default().to_string_lossy().as_ref(),
         ".git" | ".fgl" | "target" | "node_modules" | ".venv" | "__pycache__" | "dist" | "build"
     )
+}
+
+fn language_enabled(language: Language, enabled_languages: &HashSet<String>) -> bool {
+    match language.label() {
+        Some(label) => enabled_languages.contains(label),
+        None => false,
+    }
+}
+
+fn path_has_skipped_component(path: &Path) -> bool {
+    path.components()
+        .any(|component| skip_directory(Some(component.as_os_str())))
 }
 
 #[cfg(test)]
@@ -202,7 +245,7 @@ mod tests {
         write_file(&repo, "a-first.md", "a");
 
         let mut config = Config::default();
-        config.foundation.pinned_paths = vec!["z-last.md".into(), "a-first.md".into()];
+        config.foundation.pinned = vec!["z-last.md".into(), "a-first.md".into()];
 
         let selection = build_selection(&repo, &config, &[]).expect("selection builds");
 
@@ -250,7 +293,7 @@ mod tests {
         write_file(&repo, "active.md", "a");
 
         let mut config = Config::default();
-        config.foundation.pinned_paths = vec!["foundation.md".into(), "shared.md".into()];
+        config.foundation.pinned = vec!["foundation.md".into(), "shared.md".into()];
 
         let selection = build_selection(
             &repo,
@@ -281,6 +324,20 @@ mod tests {
     }
 
     #[test]
+    fn secondary_respects_enabled_languages_config() {
+        let repo = temp_repo("secondary_respects_enabled_languages_config");
+        write_file(&repo, "src/kept.py", "def kept():\n    return 1\n");
+        write_file(&repo, "src/skipped.rs", "fn skipped() {}\n");
+
+        let mut config = Config::default();
+        config.languages.enabled = vec!["python".into()];
+
+        let selection = build_selection(&repo, &config, &[]).expect("selection builds");
+
+        assert_paths(&selection.secondary, &["src/kept.py"]);
+    }
+
+    #[test]
     fn missing_active_path_reports_meaningful_error() {
         let repo = temp_repo("missing_active_path_reports_meaningful_error");
 
@@ -289,7 +346,10 @@ mod tests {
 
         assert_eq!(
             error,
-            Error::path_not_found(PathBuf::from("missing.md"), crate::error::PathOrigin::Active)
+            Error::path_not_found(
+                PathBuf::from("missing.md"),
+                crate::error::PathOrigin::Active
+            )
         );
     }
 
@@ -299,7 +359,7 @@ mod tests {
         let outside = std::env::temp_dir().join("frugal-outside.txt");
         fs::write(&outside, "outside").expect("outside file written");
 
-        let error = build_selection(&repo, &Config::default(), &[outside.clone()])
+        let error = build_selection(&repo, &Config::default(), std::slice::from_ref(&outside))
             .expect_err("outside path should error");
 
         assert_eq!(

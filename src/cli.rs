@@ -28,6 +28,10 @@ pub struct InitArgs {}
 
 #[derive(Debug, Clone, Args, PartialEq, Eq, Default)]
 pub struct PackArgs {
+    /// Write rendered pack to file instead of stdout
+    #[arg(short, long, value_name = "PATH")]
+    pub output: Option<PathBuf>,
+
     /// Files to include in Active Zone order
     #[arg(value_name = "PATH")]
     pub paths: Vec<PathBuf>,
@@ -67,7 +71,22 @@ mod tests {
         assert_eq!(
             cli.command,
             Command::Pack(PackArgs {
+                output: None,
                 paths: vec![PathBuf::from("a.md"), PathBuf::from("b.md")],
+            })
+        );
+    }
+
+    #[test]
+    fn parse_pack_output_flag() {
+        let cli = Cli::try_parse_from(["fgl", "pack", "--output", "CONTEXT.md", "a.md"])
+            .expect("pack parses");
+
+        assert_eq!(
+            cli.command,
+            Command::Pack(PackArgs {
+                output: Some(PathBuf::from("CONTEXT.md")),
+                paths: vec![PathBuf::from("a.md")],
             })
         );
     }
@@ -76,7 +95,10 @@ mod tests {
     fn root_requires_subcommand() {
         let error = Cli::try_parse_from(["fgl"]).expect_err("missing subcommand");
 
-        assert_eq!(error.kind(), ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand);
+        assert_eq!(
+            error.kind(),
+            ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
+        );
     }
 
     #[test]

@@ -11,10 +11,8 @@ const CONFIG_PATH: &str = ".fgl/config.toml";
 const AGENTS_PATH: &str = "AGENTS.md";
 const CLAUDE_PATH: &str = "CLAUDE.md";
 
-const AGENTS_BODY: &str =
-    "# AGENTS\n\n- Read `AGENTS.md` before changing code.\n- Keep patches small and deterministic.\n";
-const CLAUDE_BODY: &str =
-    "# CLAUDE\n\n- Read `AGENTS.md` before changing code.\n- Keep patches small and deterministic.\n";
+const AGENTS_BODY: &str = "# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n";
+const CLAUDE_BODY: &str = "# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n";
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct InitRunner;
@@ -40,7 +38,7 @@ fn ensure_config(repo_root: &Path) -> Result<()> {
     }
 
     let mut config = Config::default();
-    config.foundation.pinned_paths = vec![AGENTS_PATH.to_string(), CLAUDE_PATH.to_string()];
+    config.foundation.pinned = vec![AGENTS_PATH.to_string(), CLAUDE_PATH.to_string()];
 
     let rendered = config.render().map_err(Error::config)?;
     fs::write(repo_root.join(CONFIG_PATH), rendered).map_err(Error::io)

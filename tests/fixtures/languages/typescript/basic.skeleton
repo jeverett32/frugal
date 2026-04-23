@@ -1,0 +1,33 @@
+export const MAX_USERS: number = ...;
+
+/** Represents an identifier. */
+export type Id = ...;
+
+/** User profile. */
+export interface User {
+  id: Id;
+  name: string;
+  greet(): string;
+}
+
+/** Server status. */
+export enum Status {
+  Active,
+  Inactive,
+}
+
+/** Fetches a user. */
+export function fetchUser(id: Id): Promise<User> { ... }
+
+/** Basic repository. */
+export class Repository<T> {
+  private items: T[] = ...;
+
+  constructor(initial: T[] = []) { ... }
+
+  add(item: T): void { ... }
+
+  get size(): number { ... }
+}
+
+declare function log(message: string): void;

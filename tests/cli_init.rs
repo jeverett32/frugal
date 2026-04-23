@@ -2,11 +2,11 @@ mod common;
 
 use common::{assert_success, read, remove_repo, run_init, temp_repo, write};
 
-const EXPECTED_CONFIG: &str = "version = 1\n\n[foundation]\npinned_paths = [\"AGENTS.md\", \"CLAUDE.md\"]\n";
+const EXPECTED_CONFIG: &str = "version = 1\n\n[foundation]\npinned = [\"AGENTS.md\", \"CLAUDE.md\"]\n\n[languages]\nenabled = [\"python\", \"rust\", \"javascript\", \"typescript\", \"go\"]\n";
 
-const EXPECTED_AGENTS: &str = "<!-- frugal:managed:start -->\n# AGENTS\n\n- Read `AGENTS.md` before changing code.\n- Keep patches small and deterministic.\n<!-- frugal:managed:end -->\n";
+const EXPECTED_AGENTS: &str = "<!-- frugal:managed:start -->\n# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n<!-- frugal:managed:end -->\n";
 
-const EXPECTED_CLAUDE: &str = "<!-- frugal:managed:start -->\n# CLAUDE\n\n- Read `AGENTS.md` before changing code.\n- Keep patches small and deterministic.\n<!-- frugal:managed:end -->\n";
+const EXPECTED_CLAUDE: &str = "<!-- frugal:managed:start -->\n# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n<!-- frugal:managed:end -->\n";
 
 #[test]
 fn init_creates_config_agents_claude_in_empty_repo() {
@@ -58,11 +58,11 @@ fn init_preserves_user_text_outside_managed_markers() {
 
     assert_eq!(
         read(&repo, "AGENTS.md"),
-        "intro line\n\n<!-- frugal:managed:start -->\n# AGENTS\n\n- Read `AGENTS.md` before changing code.\n- Keep patches small and deterministic.\n<!-- frugal:managed:end -->\n\noutro line\n"
+        "intro line\n\n<!-- frugal:managed:start -->\n# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n<!-- frugal:managed:end -->\n\noutro line\n"
     );
     assert_eq!(
         read(&repo, "CLAUDE.md"),
-        "claude intro\n\n<!-- frugal:managed:start -->\n# CLAUDE\n\n- Read `AGENTS.md` before changing code.\n- Keep patches small and deterministic.\n<!-- frugal:managed:end -->\n\nclaude outro\n"
+        "claude intro\n\n<!-- frugal:managed:start -->\n# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n<!-- frugal:managed:end -->\n\nclaude outro\n"
     );
 
     remove_repo(&repo);
@@ -84,22 +84,22 @@ fn init_updates_existing_managed_block_only() {
     write(
         &repo,
         ".fgl/config.toml",
-        "version = 1\n\n[foundation]\npinned_paths = [\"custom.md\"]\n",
+        "version = 1\n\n[foundation]\npinned = [\"custom.md\"]\n\n[languages]\nenabled = [\"python\"]\n",
     );
 
     assert_success(&run_init(&repo));
 
     assert_eq!(
         read(&repo, ".fgl/config.toml"),
-        "version = 1\n\n[foundation]\npinned_paths = [\"custom.md\"]\n"
+        "version = 1\n\n[foundation]\npinned = [\"custom.md\"]\n\n[languages]\nenabled = [\"python\"]\n"
     );
     assert_eq!(
         read(&repo, "AGENTS.md"),
-        "before\n\n<!-- frugal:managed:start -->\n# AGENTS\n\n- Read `AGENTS.md` before changing code.\n- Keep patches small and deterministic.\n<!-- frugal:managed:end -->\n\nafter\n"
+        "before\n\n<!-- frugal:managed:start -->\n# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n<!-- frugal:managed:end -->\n\nafter\n"
     );
     assert_eq!(
         read(&repo, "CLAUDE.md"),
-        "before claude\n\n<!-- frugal:managed:start -->\n# CLAUDE\n\n- Read `AGENTS.md` before changing code.\n- Keep patches small and deterministic.\n<!-- frugal:managed:end -->\n\nafter claude\n"
+        "before claude\n\n<!-- frugal:managed:start -->\n# frugal\n\n1. Run `fgl status` before starting a task to see current prefix/active ratio.\n2. Run `fgl pack <paths...>` instead of reading many source files directly when exploring.\n3. Treat Foundation slab as read-only cached context. Do not re-read pinned files raw unless you need to edit them.\n4. Read a file raw only when you need exact body content or plan to write to it.\n5. Prefer `fgl pack <active-file> > CONTEXT.md` when preparing context for an external model.\n<!-- frugal:managed:end -->\n\nafter claude\n"
     );
 
     remove_repo(&repo);
@@ -108,7 +108,7 @@ fn init_updates_existing_managed_block_only() {
 #[test]
 fn init_preserves_existing_valid_toml_config() {
     let repo = temp_repo();
-    let existing = "# repo-specific config\nversion = 1\n\n[foundation]\npinned_paths = [\n  'custom.md',\n  \"notes.md\",\n]\n";
+    let existing = "# repo-specific config\nversion = 1\n\n[foundation]\npinned = [\n  'custom.md',\n  \"notes.md\",\n]\n\n[languages]\nenabled = [\"python\", \"rust\"]\n";
     write(&repo, ".fgl/config.toml", existing);
 
     assert_success(&run_init(&repo));

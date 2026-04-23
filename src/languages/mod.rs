@@ -99,58 +99,55 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
-    fn rust_placeholder_is_explicit_and_source_independent() {
+    fn rust_skeleton_depends_on_source() {
         let path = PathBuf::from("src/lib.rs");
         let left = skeletonize(&path, "fn left() {}\n");
         let right = skeletonize(&path, "fn right() {}\n");
 
-        assert_eq!(left, right);
-        assert_eq!(left.fence_label, "text");
-        assert!(left.is_placeholder);
-        assert_eq!(
-            left.body,
-            concat!(
-                "TODO: rust skeleton placeholder\n",
-                "path: src/lib.rs\n",
-                "status: deterministic placeholder; extraction not implemented\n",
-            )
-        );
+        assert_eq!(left.fence_label, "rust");
+        assert_eq!(right.fence_label, "rust");
+        assert!(!left.is_placeholder);
+        assert!(!right.is_placeholder);
+        assert_ne!(left.body, right.body);
     }
 
     #[test]
-    fn javascript_placeholder_is_explicit_and_source_independent() {
+    fn javascript_skeleton_depends_on_source() {
         let path = PathBuf::from("web/app.js");
-        let left = skeletonize(&path, "export const left = 1;\n");
-        let right = skeletonize(&path, "export const right = 2;\n");
+        let left = skeletonize(&path, "function left() {}\n");
+        let right = skeletonize(&path, "function right() {}\n");
 
-        assert_eq!(left, right);
-        assert_eq!(left.fence_label, "text");
-        assert!(left.is_placeholder);
-        assert!(left.body.contains("TODO: javascript skeleton placeholder"));
+        assert_eq!(left.fence_label, "javascript");
+        assert_eq!(right.fence_label, "javascript");
+        assert!(!left.is_placeholder);
+        assert!(!right.is_placeholder);
+        assert_ne!(left.body, right.body);
     }
 
     #[test]
-    fn typescript_placeholder_is_explicit_and_source_independent() {
+    fn typescript_skeleton_depends_on_source() {
         let path = PathBuf::from("web/app.ts");
         let left = skeletonize(&path, "export type Left = string;\n");
         let right = skeletonize(&path, "export type Right = number;\n");
 
-        assert_eq!(left, right);
-        assert_eq!(left.fence_label, "text");
-        assert!(left.is_placeholder);
-        assert!(left.body.contains("TODO: typescript skeleton placeholder"));
+        assert_eq!(left.fence_label, "typescript");
+        assert_eq!(right.fence_label, "typescript");
+        assert!(!left.is_placeholder);
+        assert!(!right.is_placeholder);
+        assert_ne!(left.body, right.body);
     }
 
     #[test]
-    fn go_placeholder_is_explicit_and_source_independent() {
+    fn go_skeleton_depends_on_source() {
         let path = PathBuf::from("cmd/main.go");
         let left = skeletonize(&path, "package main\nfunc left() {}\n");
         let right = skeletonize(&path, "package main\nfunc right() {}\n");
 
-        assert_eq!(left, right);
-        assert_eq!(left.fence_label, "text");
-        assert!(left.is_placeholder);
-        assert!(left.body.contains("TODO: go skeleton placeholder"));
+        assert_eq!(left.fence_label, "go");
+        assert_eq!(right.fence_label, "go");
+        assert!(!left.is_placeholder);
+        assert!(!right.is_placeholder);
+        assert_ne!(left.body, right.body);
     }
 
     #[test]

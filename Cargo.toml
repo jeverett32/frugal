@@ -14,7 +14,12 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.5.39", features = ["derive"] }
+ignore = "0.4.23"
 serde = { version = "1.0.228", features = ["derive"] }
 tree-sitter = "0.25.10"
+tree-sitter-go = "0.25.0"
+tree-sitter-javascript = "0.25.0"
 tree-sitter-python = "0.25.0"
+tree-sitter-rust = "0.24.2"
+tree-sitter-typescript = "0.23.2"
 toml = "0.8.23"

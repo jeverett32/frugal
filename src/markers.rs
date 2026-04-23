@@ -53,7 +53,8 @@ fn replace_block(
     }
 
     let after_end_idx = end_idx + END_MARKER.len();
-    if input[after_end_idx..].contains(START_MARKER) || input[after_end_idx..].contains(END_MARKER) {
+    if input[after_end_idx..].contains(START_MARKER) || input[after_end_idx..].contains(END_MARKER)
+    {
         return Err(MarkerError::MultipleManagedBlocks);
     }
     if input[..start_idx].contains(START_MARKER) || input[..start_idx].contains(END_MARKER) {
@@ -118,33 +119,25 @@ mod tests {
 
         assert_eq!(
             output,
-            format!(
-                "# AGENTS\n\n{START_MARKER}\nmanaged body\n{END_MARKER}\n"
-            )
+            format!("# AGENTS\n\n{START_MARKER}\nmanaged body\n{END_MARKER}\n")
         );
     }
 
     #[test]
     fn replace_existing_managed_block() {
-        let input = format!(
-            "# AGENTS\n\n{START_MARKER}\nold body\n{END_MARKER}\n"
-        );
+        let input = format!("# AGENTS\n\n{START_MARKER}\nold body\n{END_MARKER}\n");
 
         let output = upsert_managed_block(&input, "new body").expect("replace should succeed");
 
         assert_eq!(
             output,
-            format!(
-                "# AGENTS\n\n{START_MARKER}\nnew body\n{END_MARKER}\n"
-            )
+            format!("# AGENTS\n\n{START_MARKER}\nnew body\n{END_MARKER}\n")
         );
     }
 
     #[test]
     fn preserve_text_outside_markers() {
-        let input = format!(
-            "before\n\n{START_MARKER}\nold\n{END_MARKER}\n\nafter\n"
-        );
+        let input = format!("before\n\n{START_MARKER}\nold\n{END_MARKER}\n\nafter\n");
 
         let output = upsert_managed_block(&input, "new").expect("replace should succeed");
 

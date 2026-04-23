@@ -1,5 +1,5 @@
 pub fn estimate_tokens(bytes: usize) -> usize {
-    (bytes + 3) / 4
+    bytes.div_ceil(4)
 }
 
 #[cfg(test)]

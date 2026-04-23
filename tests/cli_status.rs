@@ -91,8 +91,14 @@ fn status_matches_pack_selection_pipeline() {
     assert_success(&pack);
 
     let status_stdout = String::from_utf8(status.stdout).expect("status stdout utf8");
-    assert!(status_stdout.contains("files=4 "), "stdout was {status_stdout:?}");
-    assert!(status_stdout.contains("langs=2"), "stdout was {status_stdout:?}");
+    assert!(
+        status_stdout.contains("files=4 "),
+        "stdout was {status_stdout:?}"
+    );
+    assert!(
+        status_stdout.contains("langs=2"),
+        "stdout was {status_stdout:?}"
+    );
 
     let pack_stdout = String::from_utf8(pack.stdout).expect("pack stdout utf8");
     assert!(pack_stdout.contains("AGENTS.md"));

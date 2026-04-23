@@ -64,9 +64,7 @@ fn init_fails_on_malformed_config() {
 
     assert!(!output.status.success(), "expected failure");
     assert_eq!(output.status.code(), Some(1));
-    assert!(
-        String::from_utf8_lossy(&output.stderr).contains("config error: invalid TOML:")
-    );
+    assert!(String::from_utf8_lossy(&output.stderr).contains("config error: invalid TOML:"));
 
     let _ = fs::remove_dir_all(repo);
 }
@@ -74,16 +72,18 @@ fn init_fails_on_malformed_config() {
 #[test]
 fn init_fails_on_malformed_managed_markers() {
     let repo = temp_repo();
-    write(&repo, "AGENTS.md", "<!-- frugal:managed:start -->\nmissing end\n");
+    write(
+        &repo,
+        "AGENTS.md",
+        "<!-- frugal:managed:start -->\nmissing end\n",
+    );
 
     let output = run_fgl(&repo, &["init"]);
 
     assert!(!output.status.success(), "expected failure");
     assert_eq!(output.status.code(), Some(1));
-    assert!(
-        String::from_utf8_lossy(&output.stderr)
-            .contains("marker error: missing managed block end marker")
-    );
+    assert!(String::from_utf8_lossy(&output.stderr)
+        .contains("marker error: missing managed block end marker"));
 
     let _ = fs::remove_dir_all(repo);
 }

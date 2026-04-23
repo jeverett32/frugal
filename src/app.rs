@@ -141,6 +141,7 @@ mod tests {
 
         app.run(Cli {
             command: Command::Pack(PackArgs {
+                output: None,
                 paths: vec!["active.md".into()],
             }),
         })

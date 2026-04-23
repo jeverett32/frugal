@@ -1,0 +1,22 @@
+package grouped
+
+const limit = ...
+
+var (
+    // Counter docs.
+    counter int
+    names = ...
+)
+
+type (
+	// Alias docs.
+	Alias = map[string]int
+
+	// Worker docs.
+	Worker interface {
+		Work() error
+	}
+)
+
+// Run docs.
+func Run() error { ... }

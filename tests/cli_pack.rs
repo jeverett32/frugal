@@ -50,7 +50,10 @@ fn pack_markdown_matches_shared_repo_fixture_shape() {
 
     let stdout = String::from_utf8(output.stdout).expect("stdout utf8");
     assert!(stdout.contains("# Foundation\n"), "stdout was {stdout:?}");
-    assert!(stdout.contains("# Secondary Skeletons\n"), "stdout was {stdout:?}");
+    assert!(
+        stdout.contains("# Secondary Skeletons\n"),
+        "stdout was {stdout:?}"
+    );
     assert!(stdout.contains("# Active Zone\n"), "stdout was {stdout:?}");
     assert!(stdout.contains("AGENTS.md"), "stdout was {stdout:?}");
     assert!(stdout.contains("CLAUDE.md"), "stdout was {stdout:?}");
@@ -64,6 +67,34 @@ fn pack_markdown_matches_shared_repo_fixture_shape() {
     let active = stdout.find("# Active Zone\n").expect("active heading");
     assert!(foundation < secondary, "stdout was {stdout:?}");
     assert!(secondary < active, "stdout was {stdout:?}");
+
+    remove_repo(&repo);
+}
+
+#[test]
+fn pack_writes_context_file_when_output_flag_used() {
+    let repo = repo_from_fixture("shared_repo");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_fgl"))
+        .current_dir(&repo)
+        .arg("pack")
+        .arg("--output")
+        .arg("CONTEXT.md")
+        .arg("docs/active.md")
+        .output()
+        .expect("run fgl pack");
+
+    assert_success(&output);
+
+    let context = fs::read_to_string(repo.join("CONTEXT.md")).expect("read context file");
+    assert!(
+        context.contains("# Foundation\n"),
+        "context was {context:?}"
+    );
+    assert!(
+        context.contains("docs/active.md"),
+        "context was {context:?}"
+    );
 
     remove_repo(&repo);
 }

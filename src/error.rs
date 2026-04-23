@@ -14,8 +14,14 @@ pub enum Error {
         detail: &'static str,
     },
     Io(String),
-    PathNotFound { path: PathBuf, origin: PathOrigin },
-    PathOutsideRepo { path: PathBuf, origin: PathOrigin },
+    PathNotFound {
+        path: PathBuf,
+        origin: PathOrigin,
+    },
+    PathOutsideRepo {
+        path: PathBuf,
+        origin: PathOrigin,
+    },
     Config(ConfigError),
     Marker(MarkerError),
 }
@@ -74,7 +80,12 @@ impl Display for Error {
                 write!(f, "{} path not found: {}", origin.label(), path.display())
             }
             Self::PathOutsideRepo { path, origin } => {
-                write!(f, "{} path outside repo root: {}", origin.label(), path.display())
+                write!(
+                    f,
+                    "{} path outside repo root: {}",
+                    origin.label(),
+                    path.display()
+                )
             }
             Self::Config(error) => write!(f, "config error: {error}"),
             Self::Marker(error) => write!(f, "marker error: {error}"),

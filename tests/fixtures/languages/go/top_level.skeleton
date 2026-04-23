@@ -1,0 +1,28 @@
+package sample
+
+const (
+    // State docs.
+    stateReady = ...
+    stateDone = ...
+)
+
+var version = ...
+
+// User docs.
+type User struct {
+	ID   int
+	Name string
+}
+
+// Reader docs.
+type Reader interface {
+	Read(p []byte) (n int, err error)
+}
+
+type ID = string
+
+// NewUser docs.
+func NewUser(name string) *User { ... }
+
+// NameLen docs.
+func (u *User) NameLen() int { ... }

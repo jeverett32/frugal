@@ -1,0 +1,22 @@
+const MAX_RETRIES = ...;
+
+/**
+ * Loads an item.
+ */
+function loadItem(id) { ... }
+
+/**
+ * Represents a repository.
+ */
+class Repository {
+  constructor(name) { ... }
+
+  /** Save the repo. */
+  save() { ... }
+
+  static create(name) { ... }
+}
+
+export const helper = (value) => { ... };
+
+export default function main() { ... }
