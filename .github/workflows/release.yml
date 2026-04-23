@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build-${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            archive: tar.gz
+            binary: fgl
+          - os: macos-13
+            target: x86_64-apple-darwin
+            archive: tar.gz
+            binary: fgl
+          - os: macos-14
+            target: aarch64-apple-darwin
+            archive: tar.gz
+            binary: fgl
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive: zip
+            binary: fgl.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.target }}
+
+      - name: Package unix archive
+        if: matrix.archive == 'tar.gz'
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME}"
+          dir="frugal-${version}-${{ matrix.target }}"
+          mkdir -p "$dir"
+          cp "target/${{ matrix.target }}/release/${{ matrix.binary }}" "$dir/"
+          cp README.md LICENSE "$dir/"
+          tar -czf "${dir}.tar.gz" "$dir"
+
+      - name: Package windows archive
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          $version = "${env:GITHUB_REF_NAME}"
+          $dir = "frugal-$version-${{ matrix.target }}"
+          New-Item -ItemType Directory -Path $dir | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/${{ matrix.binary }}" "$dir/"
+          Copy-Item README.md, LICENSE "$dir/"
+          Compress-Archive -Path "$dir/*" -DestinationPath "$dir.zip"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: |
+            frugal-${{ github.ref_name }}-${{ matrix.target }}.tar.gz
+            frugal-${{ github.ref_name }}-${{ matrix.target }}.zip
+
+  publish:
+    name: publish-release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

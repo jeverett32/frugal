@@ -81,6 +81,14 @@ Install from local checkout:
 cargo install --path .
 ```
 
+Install from GitHub once tagged:
+
+```bash
+cargo install --git https://github.com/jeverett32/frugal --tag v0.1.0
+```
+
+Or download a prebuilt binary from the GitHub Releases page for your platform.
+
 Verify:
 
 ```bash
