@@ -8,8 +8,6 @@ Portrait logos: prefer setting `height=` (not `width=`) to preserve aspect ratio
   <img src="docs/assets/logo.png" alt="frugal logo" height="180" />
 </p>
 
-<h1 align="center">frugal</h1>
-
 <p align="center">
   <strong>Cache-aware context packing for AI-assisted development.</strong>
 </p>
