@@ -1,0 +1,15 @@
+"""Repository module docs."""
+
+MAX_RETRIES = ...
+
+class Repository:
+    """Repository docs."""
+
+    @classmethod
+    def create(cls) -> "Repository": ...
+        """Create new repo."""
+
+    @staticmethod
+    def validate(value): ...
+
+    def save(self) -> None: ...
