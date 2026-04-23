@@ -11,11 +11,14 @@ function Resolve-Version {
         return $Version
     }
 
-    $response = Invoke-WebRequest -Method Head -MaximumRedirection 0 -ErrorAction SilentlyContinue `
-        -Uri "https://github.com/$RepoOwner/$RepoName/releases/latest"
-
-    if ($response.Headers.Location) {
-        return ($response.Headers.Location -split "/")[-1]
+    try {
+        Invoke-WebRequest -Method Head -MaximumRedirection 0 `
+            -Uri "https://github.com/$RepoOwner/$RepoName/releases/latest" | Out-Null
+    } catch {
+        $location = $_.Exception.Response.Headers.Location
+        if ($location) {
+            return ($location.ToString() -split "/")[-1]
+        }
     }
 
     throw "could not resolve latest release version"
