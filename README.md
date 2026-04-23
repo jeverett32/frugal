@@ -5,7 +5,7 @@ Drop your logo at `docs/assets/logo.png` and update the `src=` below if needed.
 Portrait logos: prefer setting `height=` (not `width=`) to preserve aspect ratio.
 -->
 <p align="center">
-  <img src="docs/assets/logo.png" alt="frugal logo" height="180" />
+  <img src="docs/assets/logo.png" alt="frugal logo" height="240" />
 </p>
 
 <p align="center">
