@@ -63,7 +63,7 @@ main() {
   url="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${version}/${archive_name}"
   tmpdir="$(mktemp -d)"
 
-  trap 'rm -rf "$tmpdir"' EXIT
+  trap "rm -rf '$tmpdir'" EXIT
 
   echo "Installing ${BIN_NAME} ${version} for ${target}..."
   curl -fsSL "$url" -o "$tmpdir/$archive_name"
